@@ -38,15 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const hashedPassword = await bcrypt.hash(contrasena, 10);
 
     // 3. Insertar el nuevo administrador
-    const { data, error: insertError } = await supabase
-      .from('administradores') // Reemplaza 'administradores' con el nombre real de tu tabla
-      .insert([
-        {
-          usuario: usuario,
-          contrasena_hash: hashedPassword, // Ajusta el nombre de la columna si es diferente
-          created_at: new Date().toISOString(),
-        },
-      ]);
+  const { data, error: insertError } = await supabase
+  .from('administradores')
+  .insert([
+    {
+      usuario: usuario,
+      contrasena: hashedPassword,
+      // No envíes created_at si no existe en tu tabla
+    },
+  ]);
 
     if (insertError) {
       console.error('Error al insertar administrador en Supabase:', insertError);

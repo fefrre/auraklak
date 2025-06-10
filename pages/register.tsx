@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from "next/router"; // Importar useRouter para redirigir
-import Link from "next/link"; // Importar Link para la navegación
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +17,7 @@ export default function RegisterPage() {
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -26,97 +26,76 @@ export default function RegisterPage() {
       setMessage(`Error al registrarse: ${error.message}`);
     } else {
       setMessage(
-        "¡Registro exitoso! Por favor, revisa tu email para confirmar tu cuenta y luego inicia sesión."
+        "¡Registro exitoso! Por favor revisa tu email para confirmar la cuenta."
       );
-      // Opcional: Redirigir al usuario a la página de login después de un breve retraso
+      // Opcional: redirigir después de un tiempo
       setTimeout(() => {
         router.push("/login");
-      }, 3000);
+      }, 4000);
     }
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 text-gray-100 p-4">
-      <div className="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-700 animate-fade-in">
-        <h2 className="text-4xl font-extrabold text-purple-400 text-center mb-8 drop-shadow-md">
+      <div className="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-700">
+        <h2 className="text-4xl font-extrabold text-purple-400 text-center mb-8">
           Crear Cuenta
         </h2>
         <form onSubmit={handleRegister} className="space-y-6">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-lg font-medium text-purple-300 mb-2"
-            >
+            <label htmlFor="email" className="block mb-2 text-purple-300 font-medium">
               Email:
             </label>
             <input
               type="email"
               id="email"
               placeholder="tu@correo.com"
-              className="w-full p-4 border border-purple-600 rounded-lg shadow-inner bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="w-full p-4 rounded-lg bg-gray-800 border border-purple-600 text-gray-100"
             />
           </div>
           <div>
-            <label
-              htmlFor="password"
-              className="block text-lg font-medium text-purple-300 mb-2"
-            >
+            <label htmlFor="password" className="block mb-2 text-purple-300 font-medium">
               Contraseña:
             </label>
             <input
               type="password"
               id="password"
               placeholder="Crea una contraseña segura"
-              className="w-full p-4 border border-purple-600 rounded-lg shadow-inner bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full p-4 rounded-lg bg-gray-800 border border-purple-600 text-gray-100"
             />
           </div>
-          <div className="flex flex-col gap-4 mt-8">
-            <button
-              type="submit"
-              className="w-full px-8 py-4 bg-purple-700 text-white font-bold text-xl rounded-lg hover:bg-purple-800 transition-all duration-300 shadow-lg hover:shadow-purple-glow-md"
-              disabled={loading}
-            >
-              {loading ? "Registrando..." : "Registrarse"}
-            </button>
-            <p className="text-center text-sm text-gray-400">
-              ¿Ya tienes una cuenta?{" "}
-              <Link
-                href="/login"
-                className="text-purple-400 hover:text-purple-300 transition"
-              >
-                Inicia sesión aquí
-              </Link>
-            </p>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-lg"
+          >
+            {loading ? "Registrando..." : "Registrarse"}
+          </button>
         </form>
 
         {message && (
           <p
-            className={`mt-6 text-center text-lg ${
-              message.includes("éxito") || message.includes("revisa tu email")
-                ? "text-green-400"
-                : "text-red-400"
-            } animate-pulse`}
+            className={`mt-6 text-center ${
+              message.includes("error") ? "text-red-500" : "text-green-400"
+            }`}
           >
             {message}
           </p>
         )}
 
-        {/* Botón para regresar al index */}
-        <div className="mt-8 text-center">
-          <Link href="/">
-            <button className="px-6 py-3 bg-gray-700 text-gray-200 font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-lg">
-              Regresar al Inicio
-            </button>
+        <p className="mt-6 text-center text-gray-400">
+          ¿Ya tienes cuenta?{" "}
+          <Link href="/login" className="text-purple-400 hover:text-purple-300">
+            Inicia sesión aquí
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   );

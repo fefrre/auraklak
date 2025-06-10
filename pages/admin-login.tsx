@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
     setErrorLogin(""); // Limpia errores anteriores
 
     try {
-      const res = await fetch("'/api/registrar-admin'", {
+      const res = await fetch("/api/login-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ usuario, contrasena }),
