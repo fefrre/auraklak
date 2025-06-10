@@ -1,36 +1,102 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+"use client";
+import { useState } from "react";
+
 import { supabase } from "@/lib/supabaseClient";
-import bcrypt from "bcryptjs";
+import Link from "next/link"; // Importar Link para el botón de regreso
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, mensaje: "Método no permitido" });
-  }
+export default function RegistrarAdmin() {
+  const [usuario, setUsuario] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
-  const { usuario, contrasena } = req.body;
+  const handleRegistro = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensaje("");
 
-  if (!usuario || !contrasena) {
-    return res.status(400).json({ ok: false, mensaje: "Faltan datos obligatorios" });
-  }
+    try {
+      const res = await fetch("/api/registrar-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ usuario, contrasena }),
+      });
 
-  try {
-    const hash = await bcrypt.hash(contrasena, 10);
+      const data = await res.json();
 
-    const { error } = await supabase.from("administradores").insert({
-      usuario,
-      contrasena: hash,
-    });
-
-    if (error) {
-      if (error.code === "23505") {
-        return res.status(409).json({ ok: false, mensaje: "El nombre de usuario ya existe." });
+      if (res.status === 201) {
+        setMensaje("¡Administrador registrado con éxito!");
+        setUsuario("");
+        setContrasena("");
+      } else {
+        setMensaje(`Error: ${data.mensaje}`);
       }
-      return res.status(500).json({ ok: false, mensaje: error.message });
+    } catch (err: any) {
+      console.error("Error al registrar administrador:", err);
+      setMensaje("Ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
     }
+  };
 
-    res.status(201).json({ ok: true, mensaje: "Administrador registrado correctamente." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, mensaje: "Error interno del servidor." });
-  }
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-gray-100 p-4">
+      <div className="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-700 animate-fade-in">
+        <h2 className="text-4xl font-extrabold text-purple-400 text-center mb-8 drop-shadow-md">
+          Registrar Administrador
+        </h2>
+        <form onSubmit={handleRegistro} className="space-y-6">
+          <div>
+            <label
+              htmlFor="usuario"
+              className="block text-lg font-medium text-purple-300 mb-2"
+            >
+              Usuario:
+            </label>
+            <input
+              type="text"
+              id="usuario"
+              placeholder="Escribe el nombre de usuario"
+              className="w-full p-4 border border-purple-600 rounded-lg shadow-inner bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg"
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="contrasena"
+              className="block text-lg font-medium text-purple-300 mb-2"
+            >
+              Contraseña:
+            </label>
+            <input
+              type="password"
+              id="contrasena"
+              placeholder="Crea una contraseña segura"
+              className="w-full p-4 border border-purple-600 rounded-lg shadow-inner bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg"
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-4 mt-8">
+            <button
+              type="submit"
+              className="w-full px-8 py-4 bg-purple-700 text-white font-bold text-xl rounded-lg hover:bg-purple-800 transition-all duration-300 shadow-lg hover:shadow-purple-glow-md"
+            >
+              Registrar Administrador
+            </button>
+          </div>
+        </form>
+        {mensaje && (
+          <p
+            className={`mt-6 text-center text-lg ${
+              mensaje.includes("éxito") ? "text-green-400" : "text-red-400"
+            } animate-pulse`}
+          >
+            {mensaje}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
