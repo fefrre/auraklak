@@ -1,10 +1,9 @@
-// pages/login.tsx
 "use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/router"; // Importar useRouter para redirigir
-import Link from "next/link";
+import Link from "next/link"; // Importar Link para la navegación
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -102,6 +101,15 @@ export default function LoginPage() {
             {message}
           </p>
         )}
+
+        {/* Botón para regresar al index */}
+        <div className="mt-8 text-center">
+          <Link href="/">
+            <button className="px-6 py-3 bg-gray-700 text-gray-200 font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-lg">
+              Regresar al Inicio
+            </button>
+          </Link>
+        </div>
       </div>
     </div>
   );

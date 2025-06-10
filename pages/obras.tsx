@@ -1,13 +1,12 @@
-// pages/obras.tsx
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react"; // Importa useRef
 import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MessageSquare } from "lucide-react"; // Iconos para Like y Comentario (opcional)
-import { User } from "@supabase/supabase-js"; // Importar el tipo User de Supabase
-import { useRouter } from "next/router"; // Importar useRouter
+import { Heart, MessageSquare, Menu, X, LogIn, UserPlus, LogOut } from "lucide-react"; // Nuevos iconos
+import { User } from "@supabase/supabase-js";
+import { useRouter } from "next/router";
 
 type Obra = {
   id: number;
@@ -15,34 +14,71 @@ type Obra = {
   descripcion: string;
   url_archivo: string;
   contacto: string;
-  fecha: string; // ISO string from Supabase
-  likes: number; // Campo para el conteo total de likes
-  has_liked?: boolean; // Nuevo campo para indicar si el usuario actual ha dado like
+  fecha: string;
+  likes: number;
+  has_liked?: boolean;
 };
 
 export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null); // Estado para el usuario autenticado
-  const router = useRouter(); // Inicializar useRouter
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
 
   // Estados para el header dinámico
   const [scrollUp, setScrollUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // Nuevo estado para controlar la visibilidad del menú desplegable
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Referencia para detectar clics fuera del menú
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Estados para los campos pequeños de login/registro (si decides implementarlos aquí)
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(null); // 'login', 'register', or null
+
+  // Efecto para cerrar el menú si se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+        setShowAuthForm(null); // También oculta los formularios pequeños
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
+
   // Efecto para obtener el usuario autenticado
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
     };
 
     fetchUser();
 
     // Suscribirse a cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        setIsMenuOpen(false); // Cierra el menú si el usuario inicia sesión
+        setShowAuthForm(null); // Oculta los formularios
+      }
     });
 
     return () => {
@@ -55,7 +91,6 @@ export default function ObrasPage() {
     setLoading(true);
     setError(null);
 
-    // 1. Cargar las obras
     const { data: obrasData, error: obrasError } = await supabase
       .from("obras")
       .select("id, titulo, descripcion, url_archivo, contacto, fecha, likes")
@@ -63,25 +98,27 @@ export default function ObrasPage() {
 
     if (obrasError) {
       console.error("Error al cargar obras:", obrasError);
-      setError("No se pudieron cargar las obras. Inténtalo de nuevo más tarde.");
+      setError(
+        "No se pudieron cargar las obras. Inténtalo de nuevo más tarde."
+      );
       setLoading(false);
       return;
     }
 
     let loadedObras: Obra[] = obrasData || [];
 
-    // 2. Si hay un usuario autenticado, cargar sus likes
     if (user) {
       const { data: userLikesData, error: userLikesError } = await supabase
         .from("user_likes")
         .select("obra_id")
-        .eq("user_id", user.id); // Solo los likes del usuario actual
+        .eq("user_id", user.id);
 
       if (userLikesError) {
         console.error("Error al cargar likes del usuario:", userLikesError);
-        // No bloqueamos la carga de obras, solo mostramos un mensaje si es necesario
       } else {
-        const likedObraIds = new Set(userLikesData?.map((like) => like.obra_id));
+        const likedObraIds = new Set(
+          userLikesData?.map((like) => like.obra_id)
+        );
         loadedObras = loadedObras.map((obra) => ({
           ...obra,
           has_liked: likedObraIds.has(obra.id),
@@ -91,7 +128,7 @@ export default function ObrasPage() {
 
     setObras(loadedObras);
     setLoading(false);
-  }, [user]); // Recargar obras cuando el usuario cambie
+  }, [user]);
 
   // Función para manejar el "Me gusta"
   const handleLike = useCallback(
@@ -102,11 +139,14 @@ export default function ObrasPage() {
         return;
       }
 
-      // Optimistic update: actualiza la UI antes de la respuesta del servidor
       setObras((prevObras) =>
         prevObras.map((obra) =>
           obra.id === obraId
-            ? { ...obra, has_liked: !hasLiked, likes: hasLiked ? obra.likes - 1 : obra.likes + 1 }
+            ? {
+                ...obra,
+                has_liked: !hasLiked,
+                likes: hasLiked ? obra.likes - 1 : obra.likes + 1,
+              }
             : obra
         )
       );
@@ -114,10 +154,12 @@ export default function ObrasPage() {
       let error: any = null;
 
       if (!hasLiked) {
-        const { error: insertError } = await supabase.from("user_likes").insert({
-          user_id: user.id,
-          obra_id: obraId,
-        });
+        const { error: insertError } = await supabase
+          .from("user_likes")
+          .insert({
+            user_id: user.id,
+            obra_id: obraId,
+          });
         error = insertError;
         if (!error) {
           await supabase.rpc("increment_likes", { obra_id_param: obraId });
@@ -136,31 +178,84 @@ export default function ObrasPage() {
 
       if (error) {
         console.error("Error al gestionar like/unlike:", error);
-        // Revertir el optimistic update si hubo un error
         setObras((prevObras) =>
           prevObras.map((obra) =>
             obra.id === obraId
-              ? { ...obra, has_liked: hasLiked, likes: hasLiked ? obra.likes + 1 : obra.likes - 1 }
+              ? {
+                  ...obra,
+                  has_liked: hasLiked,
+                  likes: hasLiked ? obra.likes + 1 : obra.likes - 1,
+                }
               : obra
           )
         );
         alert("Error al procesar tu 'me gusta'. Inténtalo de nuevo.");
       }
     },
-    [user, router] // Añadir router a las dependencias
+    [user, router]
   );
 
   // Función para manejar el cierre de sesión
   const handleLogout = async () => {
+    setAuthLoading(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error al cerrar sesión:", error.message);
-      alert("Error al cerrar sesión. Por favor, inténtalo de nuevo.");
+      setAuthMessage("Error al cerrar sesión. Inténtalo de nuevo.");
     } else {
-      setUser(null); // Limpiar el estado del usuario localmente
-      alert("Sesión cerrada con éxito.");
+      setUser(null);
+      setAuthMessage("Sesión cerrada con éxito.");
+      setIsMenuOpen(false); // Cierra el menú al cerrar sesión
+      setShowAuthForm(null); // Oculta los formularios
       router.push("/login"); // Redirige a la página de login
     }
+    setAuthLoading(false);
+  };
+
+  // Función para manejar el inicio de sesión desde el pequeño formulario
+  const handleInlineLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthMessage("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+
+    if (error) {
+      setAuthMessage(`Error al iniciar sesión: ${error.message}`);
+    } else {
+      setAuthMessage("¡Sesión iniciada con éxito! Redirigiendo...");
+      setLoginEmail("");
+      setLoginPassword("");
+      setTimeout(() => router.push("/obras"), 1000); // Redirige después de un breve mensaje
+    }
+    setAuthLoading(false);
+  };
+
+  // Función para manejar el registro desde el pequeño formulario
+  const handleInlineRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthMessage("");
+
+    const { error } = await supabase.auth.signUp({
+      email: registerEmail,
+      password: registerPassword,
+    });
+
+    if (error) {
+      setAuthMessage(`Error al registrarse: ${error.message}`);
+    } else {
+      setAuthMessage(
+        "¡Registro exitoso! Revisa tu email para confirmar y luego inicia sesión."
+      );
+      setRegisterEmail("");
+      setRegisterPassword("");
+      setShowAuthForm("login"); // Sugiere iniciar sesión después del registro
+    }
+    setAuthLoading(false);
   };
 
   // Efecto para cargar las obras al montar el componente o cuando el usuario cambie
@@ -207,37 +302,144 @@ export default function ObrasPage() {
             OBRAS PUBLICADAS
           </h1>
 
-          {/* Botones de acción en el header (condicionales) */}
-          <div className="flex items-center space-x-3">
-            {user ? ( // Si hay un usuario autenticado
-              <>
-                {/* Puedes añadir un Link a una página de subir obra si el usuario está autenticado */}
-                <Link href="/subir-obra"> {/* Asumiendo que tendrás una página para subir obra */}
-                  <button className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm sm:text-base lg:text-lg rounded-md transition font-semibold shadow-md whitespace-nowrap">
-                    Subir Obra
-                  </button>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base lg:text-lg rounded-md transition font-semibold shadow-md whitespace-nowrap"
-                >
-                  Cerrar Sesión
-                </button>
-              </>
-            ) : (
-              // Si no hay usuario autenticado
-              <>
-                <Link href="/login">
-                  <button className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base lg:text-lg rounded-md transition font-semibold shadow-md whitespace-nowrap">
-                    Iniciar Sesión
-                  </button>
-                </Link>
-                <Link href="/register">
-                  <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base lg:text-lg rounded-md transition font-semibold shadow-md whitespace-nowrap">
-                    Registrarse
-                  </button>
-                </Link>
-              </>
+          {/* Icono del menú y menú desplegable */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-md bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
+              aria-label="Toggle navigation menu"
+            >
+              {isMenuOpen ? (
+                <X className="w-8 h-8 text-white" />
+              ) : (
+                <Menu className="w-8 h-8 text-white" />
+              )}
+            </button>
+
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-3 w-72 md:w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-3 px-4 animate-fade-in-down z-50">
+                {user ? (
+                  <>
+                    <p className="text-gray-300 text-sm mb-3 px-2">
+                      Hola, {user.email}
+                    </p>
+                    <Link href="/index" className="block">
+                      <button className="flex items-center w-full px-4 py-3 text-left text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors duration-200 text-base font-semibold mb-2">
+                        <UserPlus className="mr-3 w-5 h-5" /> Subir Obra
+                      </button>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-3 text-left text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200 text-base font-semibold"
+                      disabled={authLoading}
+                    >
+                      <LogOut className="mr-3 w-5 h-5" />{" "}
+                      {authLoading ? "Cerrando..." : "Cerrar Sesión"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Botones para mostrar los formularios de login/registro */}
+                    <button
+                      onClick={() => {
+                        setShowAuthForm(showAuthForm === "login" ? null : "login");
+                        setAuthMessage(""); // Limpia mensajes al cambiar de formulario
+                      }}
+                      className="flex items-center w-full px-4 py-3 text-left text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors duration-200 text-base font-semibold mb-2"
+                    >
+                      <LogIn className="mr-3 w-5 h-5" /> Iniciar Sesión
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAuthForm(showAuthForm === "register" ? null : "register");
+                        setAuthMessage(""); // Limpia mensajes al cambiar de formulario
+                      }}
+                      className="flex items-center w-full px-4 py-3 text-left text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 text-base font-semibold mb-3"
+                    >
+                      <UserPlus className="mr-3 w-5 h-5" /> Registrarse
+                    </button>
+
+                    {/* Formularios pequeños (condicionales) */}
+                    {showAuthForm === "login" && (
+                      <form onSubmit={handleInlineLogin} className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg">
+                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">Login</h3>
+                        <div>
+                          <input
+                            type="email"
+                            placeholder="Email"
+                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                            value={loginEmail}
+                            onChange={(e) => setLoginEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="password"
+                            placeholder="Contraseña"
+                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="w-full p-2.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition"
+                          disabled={authLoading}
+                        >
+                          {authLoading ? "Iniciando..." : "Entrar"}
+                        </button>
+                      </form>
+                    )}
+
+                    {showAuthForm === "register" && (
+                      <form onSubmit={handleInlineRegister} className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg">
+                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">Registro</h3>
+                        <div>
+                          <input
+                            type="email"
+                            placeholder="Email"
+                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                            value={registerEmail}
+                            onChange={(e) => setRegisterEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="password"
+                            placeholder="Contraseña"
+                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                            value={registerPassword}
+                            onChange={(e) => setRegisterPassword(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="w-full p-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-md transition"
+                          disabled={authLoading}
+                        >
+                          {authLoading ? "Registrando..." : "Crear Cuenta"}
+                        </button>
+                      </form>
+                    )}
+
+                    {authMessage && (
+                      <p
+                        className={`mt-4 text-center text-sm ${
+                          authMessage.includes("éxito") || authMessage.includes("Revisa tu email")
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {authMessage}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -308,10 +510,14 @@ export default function ObrasPage() {
                 {/* Sección de acciones (Likes) */}
                 <div className="flex items-center justify-between mt-4 border-t border-gray-700 pt-4">
                   <button
-                    onClick={() => handleLike(obra.id, obra.likes, obra.has_liked ?? false)}
+                    onClick={() =>
+                      handleLike(obra.id, obra.likes, obra.has_liked ?? false)
+                    }
                     className={`flex items-center space-x-2 transition-colors duration-200 ${
                       user // Si hay un usuario, el color depende de si ha dado like
-                        ? obra.has_liked ? "text-red-500 hover:text-red-600" : "text-purple-300 hover:text-purple-500"
+                        ? obra.has_liked
+                          ? "text-red-500 hover:text-red-600"
+                          : "text-purple-300 hover:text-purple-500"
                         : "text-gray-500 cursor-not-allowed" // Deshabilitado si no hay usuario
                     }`}
                     aria-label={`Dar me gusta a ${obra.titulo}`}
