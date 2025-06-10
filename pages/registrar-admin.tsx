@@ -1,23 +1,22 @@
-"use client";
-import { useState } from "react";
+'use client';
 
-import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link"; // Importar Link para el botón de regreso
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function RegistrarAdmin() {
-  const [usuario, setUsuario] = useState("");
-  const [contrasena, setContrasena] = useState("");
-  const [mensaje, setMensaje] = useState("");
+  const [usuario, setUsuario] = useState('');
+  const [contrasena, setContrasena] = useState('');
+  const [mensaje, setMensaje] = useState('');
 
   const handleRegistro = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMensaje("");
+    setMensaje('');
 
     try {
-      const res = await fetch("/api/registrar-admin", {
-        method: "POST",
+      const res = await fetch('/api/registrar-admin', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ usuario, contrasena }),
       });
@@ -25,15 +24,15 @@ export default function RegistrarAdmin() {
       const data = await res.json();
 
       if (res.status === 201) {
-        setMensaje("¡Administrador registrado con éxito!");
-        setUsuario("");
-        setContrasena("");
+        setMensaje('¡Administrador registrado con éxito!');
+        setUsuario('');
+        setContrasena('');
       } else {
         setMensaje(`Error: ${data.mensaje}`);
       }
     } catch (err: any) {
-      console.error("Error al registrar administrador:", err);
-      setMensaje("Ocurrió un error inesperado. Por favor, inténtalo de nuevo.");
+      console.error('Error al registrar administrador:', err);
+      setMensaje('Ocurrió un error inesperado. Por favor, inténtalo de nuevo.');
     }
   };
 
@@ -85,12 +84,19 @@ export default function RegistrarAdmin() {
             >
               Registrar Administrador
             </button>
+            <Link
+              href="/"
+              className="text-center text-sm text-purple-400 hover:text-purple-300 transition"
+            >
+              ← Volver al inicio
+            </Link>
           </div>
         </form>
+
         {mensaje && (
           <p
             className={`mt-6 text-center text-lg ${
-              mensaje.includes("éxito") ? "text-green-400" : "text-red-400"
+              mensaje.includes('éxito') ? 'text-green-400' : 'text-red-400'
             } animate-pulse`}
           >
             {mensaje}
