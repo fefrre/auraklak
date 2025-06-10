@@ -1,5 +1,3 @@
-
-export const dynamic = 'force-dynamic';
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -17,7 +15,7 @@ export default function AdminLoginPage() {
     setErrorLogin(""); // Limpia errores anteriores
 
     try {
-      const res = await fetch("/api/registrar-admin", {
+      const res = await fetch("'/api/registrar-admin'", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ usuario, contrasena }),

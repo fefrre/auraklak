@@ -1,4 +1,5 @@
-'use client';
+// pages/registrar-admin.tsx
+'use client'; // ¡Esta línea es crucial y debe quedarse!
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -21,6 +22,12 @@ export default function RegistrarAdmin() {
         body: JSON.stringify({ usuario, contrasena }),
       });
 
+      // Asegúrate de que 'res' no sea undefined antes de intentar leer 'json()' o 'status'
+      if (!res) {
+        setMensaje('Error: No se recibió respuesta del servidor.');
+        return;
+      }
+
       const data = await res.json();
 
       if (res.status === 201) {
@@ -28,7 +35,7 @@ export default function RegistrarAdmin() {
         setUsuario('');
         setContrasena('');
       } else {
-        setMensaje(`Error: ${data.mensaje}`);
+        setMensaje(`Error: ${data.mensaje || 'Ocurrió un error desconocido.'}`);
       }
     } catch (err: any) {
       console.error('Error al registrar administrador:', err);
