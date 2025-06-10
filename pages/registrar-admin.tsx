@@ -1,5 +1,5 @@
 // pages/registrar-admin.tsx
-'use client'; // ¡Esta línea es crucial y debe quedarse!
+'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -13,6 +13,15 @@ export default function RegistrarAdmin() {
     e.preventDefault();
     setMensaje('');
 
+    // **AÑADIR ESTA VERIFICACIÓN**
+    // Asegura que el fetch solo se intente ejecutar en un entorno de navegador
+    if (typeof window === 'undefined') {
+        // Esto no debería suceder en un Client Component bien configurado
+        // pero es una capa de defensa adicional para el build.
+        console.warn('Attempted form submission on server during prerender. Skipping fetch.');
+        return;
+    }
+
     try {
       const res = await fetch('/api/registrar-admin', {
         method: 'POST',
@@ -22,7 +31,7 @@ export default function RegistrarAdmin() {
         body: JSON.stringify({ usuario, contrasena }),
       });
 
-      // Asegúrate de que 'res' no sea undefined antes de intentar leer 'json()' o 'status'
+      // Tu verificación ya existente es buena:
       if (!res) {
         setMensaje('Error: No se recibió respuesta del servidor.');
         return;
