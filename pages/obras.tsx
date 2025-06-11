@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react"; // Importa useRef
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MessageSquare, Menu, X, LogIn, UserPlus, LogOut } from "lucide-react"; // Nuevos iconos
+import { Heart, MessageSquare, Menu, X, LogIn, UserPlus, LogOut } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 
+// Definición de tipo para una obra
 type Obra = {
   id: number;
   titulo: string;
@@ -36,21 +37,26 @@ export default function ObrasPage() {
   // Referencia para detectar clics fuera del menú
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Estados para los campos pequeños de login/registro (si decides implementarlos aquí)
+  // Estados para los campos pequeños de login/registro
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
-  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(null); // 'login', 'register', or null
+  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(null);
+
+  // --- Nuevos estados para el modal de imagen ---
+  const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
+  const [isClosingModal, setIsClosingModal] = useState(false); // Para la animación de cierre del modal
+  // --- Fin nuevos estados ---
 
   // Efecto para cerrar el menú si se hace clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
-        setShowAuthForm(null); // También oculta los formularios pequeños
+        setShowAuthForm(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -76,8 +82,8 @@ export default function ObrasPage() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (session?.user) {
-        setIsMenuOpen(false); // Cierra el menú si el usuario inicia sesión
-        setShowAuthForm(null); // Oculta los formularios
+        setIsMenuOpen(false);
+        setShowAuthForm(null);
       }
     });
 
@@ -135,7 +141,7 @@ export default function ObrasPage() {
     async (obraId: number, currentLikes: number, hasLiked: boolean) => {
       if (!user) {
         alert("Debes iniciar sesión para dar 'me gusta'.");
-        router.push("/login"); // Redirige al login si no está autenticado
+        router.push("/login");
         return;
       }
 
@@ -205,9 +211,9 @@ export default function ObrasPage() {
     } else {
       setUser(null);
       setAuthMessage("Sesión cerrada con éxito.");
-      setIsMenuOpen(false); // Cierra el menú al cerrar sesión
-      setShowAuthForm(null); // Oculta los formularios
-      router.push("/login"); // Redirige a la página de login
+      setIsMenuOpen(false);
+      setShowAuthForm(null);
+      router.push("/login");
     }
     setAuthLoading(false);
   };
@@ -229,7 +235,7 @@ export default function ObrasPage() {
       setAuthMessage("¡Sesión iniciada con éxito! Redirigiendo...");
       setLoginEmail("");
       setLoginPassword("");
-      setTimeout(() => router.push("/obras"), 1000); // Redirige después de un breve mensaje
+      setTimeout(() => router.push("/obras"), 1000);
     }
     setAuthLoading(false);
   };
@@ -253,7 +259,7 @@ export default function ObrasPage() {
       );
       setRegisterEmail("");
       setRegisterPassword("");
-      setShowAuthForm("login"); // Sugiere iniciar sesión después del registro
+      setShowAuthForm("login");
     }
     setAuthLoading(false);
   };
@@ -263,7 +269,7 @@ export default function ObrasPage() {
     cargarObras();
   }, [cargarObras]);
 
-  // Efecto para el header dinámico (scroll) - Mantener sin cambios
+  // Efecto para el header dinámico (scroll)
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -274,6 +280,23 @@ export default function ObrasPage() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
+
+  // --- Funciones para el modal ---
+  const openModal = (obra: Obra) => {
+    setSelectedObra(obra);
+    setIsClosingModal(false); // Asegura que no está en estado de cierre
+    document.body.style.overflow = "hidden"; // Deshabilita el scroll del fondo
+  };
+
+  const closeModal = () => {
+    setIsClosingModal(true); // Inicia la animación de cierre
+    document.body.style.overflow = "auto"; // Habilita el scroll del fondo
+    // Retrasar el cierre completo para que la animación se complete
+    setTimeout(() => {
+      setSelectedObra(null);
+    }, 300); // Duración de la animación (0.3s)
+  };
+  // --- Fin funciones modal ---
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -343,7 +366,7 @@ export default function ObrasPage() {
                     <button
                       onClick={() => {
                         setShowAuthForm(showAuthForm === "login" ? null : "login");
-                        setAuthMessage(""); // Limpia mensajes al cambiar de formulario
+                        setAuthMessage("");
                       }}
                       className="flex items-center w-full px-4 py-3 text-left text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors duration-200 text-base font-semibold mb-2"
                     >
@@ -352,7 +375,7 @@ export default function ObrasPage() {
                     <button
                       onClick={() => {
                         setShowAuthForm(showAuthForm === "register" ? null : "register");
-                        setAuthMessage(""); // Limpia mensajes al cambiar de formulario
+                        setAuthMessage("");
                       }}
                       className="flex items-center w-full px-4 py-3 text-left text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 text-base font-semibold mb-3"
                     >
@@ -469,8 +492,11 @@ export default function ObrasPage() {
               key={obra.id}
               className="bg-gray-900 rounded-2xl shadow-xl border border-gray-700 overflow-hidden flex flex-col transform hover:scale-105 transition-transform duration-300 animate-fade-in"
             >
-              {/* Contenido multimedia (imagen/video) */}
-              <div className="relative w-full h-60 bg-gray-800 flex items-center justify-center overflow-hidden">
+              {/* Contenido multimedia (imagen/video) - Agregamos onClick */}
+              <div
+                className="relative w-full h-60 bg-gray-800 flex items-center justify-center overflow-hidden cursor-pointer"
+                onClick={() => openModal(obra)} // Aquí se llama a openModal
+              >
                 {obra.url_archivo.includes("video") ? (
                   <video
                     controls
@@ -483,7 +509,7 @@ export default function ObrasPage() {
                     src={obra.url_archivo}
                     alt={obra.titulo}
                     fill
-                    style={{ objectFit: "cover" }}
+                    style={{ objectFit: "cover" }} // <-- ¡Así es correcto!
                     className="w-full h-full object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     priority={false}
@@ -537,6 +563,73 @@ export default function ObrasPage() {
           ))}
         </div>
       </main>
+
+      {/* --- Modal para ver imagen grande --- */}
+      {selectedObra && (
+        <div
+          className={`fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-300
+            ${isClosingModal ? "opacity-0" : "opacity-100"}`}
+          onClick={closeModal} // Permite cerrar el modal haciendo clic fuera de la imagen
+        >
+          <div
+            className={`relative bg-gray-900 rounded-lg shadow-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto
+              transform transition-all duration-300 ease-out
+              ${isClosingModal ? "scale-90 opacity-0" : "scale-100 opacity-100 animate-zoom-in"}`}
+            onClick={(e) => e.stopPropagation()} // Evita que el clic en el contenido cierre el modal
+          >
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 p-2 rounded-full bg-purple-700 hover:bg-purple-800 text-white transition-colors duration-200 z-10"
+              aria-label="Cerrar modal"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <h2 className="text-3xl font-bold text-purple-400 mb-4 text-center">
+              {selectedObra.titulo}
+            </h2>
+
+            {selectedObra.url_archivo.includes("video") ? (
+              <div className="relative w-full h-96 bg-gray-800 flex items-center justify-center rounded-lg overflow-hidden mb-6">
+                <video
+                  controls
+                  className="w-full h-full object-contain"
+                  src={selectedObra.url_archivo}
+                  preload="metadata"
+                ></video>
+              </div>
+            ) : (
+              <div className="relative w-full h-96 bg-gray-800 flex items-center justify-center rounded-lg overflow-hidden mb-6">
+                <Image
+                  src={selectedObra.url_archivo}
+                  alt={selectedObra.titulo}
+                  fill
+                  style={{ objectFit: "contain" }} // 'contain' para que la imagen se vea completa dentro del contenedor
+                  className="rounded-lg"
+                  sizes="100vw"
+                  priority={true} // Prioriza la carga de esta imagen
+                />
+              </div>
+            )}
+
+            <div className="text-gray-200 space-y-3">
+              <p className="text-lg leading-relaxed">{selectedObra.descripcion}</p>
+              <p className="text-purple-300 font-semibold">
+                Contacto: <span className="text-gray-300">{selectedObra.contacto}</span>
+              </p>
+              <p className="text-gray-400 text-sm">
+                Publicado el: {new Date(selectedObra.fecha).toLocaleDateString()}
+              </p>
+              <div className="flex items-center space-x-2 mt-4">
+                <Heart className="w-6 h-6 text-red-500 fill-current" />
+                <span className="font-bold text-xl">{selectedObra.likes ?? 0}</span>
+                <span className="text-gray-400">me gusta</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- Fin Modal --- */}
     </div>
   );
 }
