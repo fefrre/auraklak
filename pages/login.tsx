@@ -82,6 +82,13 @@ export default function LoginPage() {
           >
             {loading ? "Iniciando..." : "Iniciar Sesión"}
           </button>
+          <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="w-full mt-4 px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
+        >
+          Volver al inicio
+        </button>
         </form>
 
         {message && (

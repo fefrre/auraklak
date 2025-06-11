@@ -10,39 +10,38 @@ export default function AdminLoginPage() {
   const [contrasena, setContrasena] = useState("");
   const [errorLogin, setErrorLogin] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorLogin(""); // Limpia errores anteriores
+ const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setErrorLogin("");
 
-    try {
-      const res = await fetch("/api/login-admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario, contrasena }),
-      });
+  try {
+    console.log("Enviando login a /api/login-admin con:", { usuario, contrasena });
 
-      if (!res.ok) {
-        // Si el status HTTP no es 2xx, lee el mensaje de error
-        const errorData = await res.json();
-        setErrorLogin(errorData.message || "Credenciales incorrectas");
-        return;
-      }
+    const res = await fetch("/api/login-admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario, contrasena }),
+    });
 
-      // Si todo está OK, parseamos el JSON
-      const result = await res.json();
+    console.log("Respuesta HTTP status:", res.status);
 
-      // Aquí asumo que tu API devuelve { message: "Login exitoso" }
-      // Para validar login exitoso, solo con que no haya error ya es suficiente
-
-      // Guardamos datos de sesión y redirigimos
-      sessionStorage.setItem("adminLoggedIn", "true");
-      sessionStorage.setItem("adminUser", usuario);
-      router.push("/admin-dashboard");
-    } catch (error) {
-      console.error("Error en la solicitud de login:", error);
-      setErrorLogin("Error de conexión. Inténtalo de nuevo.");
+    if (!res.ok) {
+      const errorData = await res.json();
+      setErrorLogin(errorData.message || "Credenciales incorrectas");
+      return;
     }
-  };
+
+    const result = await res.json();
+    console.log("Login exitoso:", result);
+
+    sessionStorage.setItem("adminLoggedIn", "true");
+    sessionStorage.setItem("adminUser", usuario);
+    router.push("/admin-dashboard");
+  } catch (error) {
+    console.error("Error en la solicitud de login:", error);
+    setErrorLogin("Error de conexión. Inténtalo de nuevo.");
+  }
+};
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-gray-100 px-4">
