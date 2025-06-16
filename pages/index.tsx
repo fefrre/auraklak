@@ -16,6 +16,7 @@ export default function HomePage() {
   const [mensaje, setMensaje] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false); // Nuevo estado para el modal de éxito
   const [isSubmitting, setIsSubmitting] = useState(false); // Para deshabilitar el botón durante el envío
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +84,93 @@ export default function HomePage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-gray-950 text-gray-100">
-      {/* Sección de encabezado */}
+    <main className="flex min-h-screen flex-col items-center bg-gray-950 text-gray-100 pt-32">
+      {/* NAVBAR AMPLIADA Y RESPONSIVA */}
+      <nav className="w-full bg-gray-900 fixed top-0 z-50 border-b-2 border-purple-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-24">
+            {/* Logo y Nombre */}
+            <div className="flex items-center space-x-4">
+              <Image
+                src="/AURA.png"
+                alt="Logo AURA"
+                width={64}
+                height={64}
+                  className="rounded-xl shadow-lg transition-transform duration-500 ease-in-out hover:scale-110 hover:rotate-3"
+
+              />
+              <span className="text-purple-400 font-extrabold text-3xl tracking-widest">
+                AURA
+              </span>
+            </div>
+            {/* Menú hamburguesa (solo móvil) */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-gray-300 hover:text-purple-400 focus:outline-none"
+              >
+                <svg
+                  className="h-8 w-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d={
+                      mobileMenuOpen
+                        ? "M6 18L18 6M6 6l12 12"
+                        : "M4 6h16M4 12h16M4 18h16"
+                    }
+                  />
+                </svg>
+              </button>
+            </div>
+            {/* Menú desktop */}
+            <div className="hidden md:flex space-x-10 text-xl font-semibold text-gray-300">
+             
+              <Link
+                href="/carpanta"
+                className="hover:text-purple-400 transition"
+              >
+                Carpanta
+              </Link>
+              <Link
+                href="/blacksirena"
+                className="hover:text-purple-400 transition"
+              >
+                Blacksirena
+              </Link>
+             
+            </div>{" "}
+          </div>
+        </div>
+
+        {/* Menú mobile desplegable */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-gray-900 border-t border-purple-800 px-6 pb-4 text-lg">
+           
+            <Link
+              href="/carpanta"
+              className="block py-3 text-gray-300 hover:text-purple-400"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Carpanta
+            </Link>
+            <Link
+              href="/blacksirena"
+              className="block py-3 text-gray-300 hover:text-purple-400"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Blacksirena
+            </Link>
+           
+          </div>
+        )}
+      </nav>
+
       <div className="w-full flex flex-col items-center justify-center py-16 bg-gradient-to-b from-black via-gray-900 to-purple-950 shadow-lg">
         <div className="relative w-48 h-48 md:w-72 md:h-72 lg:w-96 lg:h-96">
           <Image

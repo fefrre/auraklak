@@ -4,7 +4,21 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, MessageSquare, Menu, X, LogIn, UserPlus, LogOut, FileText, FileAudio, FileVideo, FileImage, FileArchive, Download } from "lucide-react"; // Import new icons, including 'Download'
+import {
+  Heart,
+  MessageSquare,
+  Menu,
+  X,
+  LogIn,
+  UserPlus,
+  LogOut,
+  FileText,
+  FileAudio,
+  FileVideo,
+  FileImage,
+  FileArchive,
+  Download,
+} from "lucide-react"; // Import new icons, including 'Download'
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 
@@ -25,7 +39,8 @@ const getFileType = (url: string) => {
   const extension = url.split(".").pop()?.toLowerCase();
   if (!extension) return "unknown";
 
-  if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(extension)) return "image";
+  if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(extension))
+    return "image";
   if (["mp4", "webm", "ogg"].includes(extension)) return "video";
   if (["pdf"].includes(extension)) return "pdf";
   if (["doc", "docx"].includes(extension)) return "word";
@@ -60,8 +75,18 @@ export default function ObrasPage() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
-  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(null);
+  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(
+    null
+  );
+  const [animatingLogo, setAnimatingLogo] = useState(false);
 
+  const handleLogoClick = () => {
+    if (animatingLogo) return; // Evitar múltiples clics
+    setAnimatingLogo(true);
+    setTimeout(() => {
+      router.push("/"); // Redirige al index después de animar
+    }, 600); // Duración de la animación (debe coincidir con la transición)
+  };
   // --- Nuevos estados para el modal de imagen ---
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   const [isClosingModal, setIsClosingModal] = useState(false); // Para la animación de cierre del modal
@@ -86,17 +111,16 @@ export default function ObrasPage() {
     try {
       const urlObj = new URL(url);
       const pathname = urlObj.pathname;
-      const parts = pathname.split('/');
+      const parts = pathname.split("/");
       // Eliminar el prefijo 'storage/v1/object/public/obras/' si existe
       const fileNameWithQuery = parts[parts.length - 1];
-      const fileNameParts = fileNameWithQuery.split('?'); // Remove query parameters
+      const fileNameParts = fileNameWithQuery.split("?"); // Remove query parameters
       return decodeURIComponent(fileNameParts[0]); // Decode URI component
     } catch (e) {
       console.error("Error parsing URL for file name:", e);
       return "archivo_descarga"; // Fallback name
     }
   };
-
 
   // Efecto para obtener el usuario autenticado y suscribirse a cambios
   useEffect(() => {
@@ -122,7 +146,8 @@ export default function ObrasPage() {
 
     return () => {
       // Limpiar la suscripción cuando el componente se desmonte
-      if (subscription) { // Asegura que la suscripción existe antes de intentar anularla
+      if (subscription) {
+        // Asegura que la suscripción existe antes de intentar anularla
         subscription.unsubscribe();
       }
     };
@@ -317,8 +342,6 @@ export default function ObrasPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
- 
-
   const openModal = (obra: Obra) => {
     setSelectedObra(obra);
     setIsClosingModal(false); // Asegura que no está en estado de cierre
@@ -339,14 +362,16 @@ export default function ObrasPage() {
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Error al descargar el archivo: ${response.statusText}`);
+        throw new Error(
+          `Error al descargar el archivo: ${response.statusText}`
+        );
       }
 
       const blob = await response.blob();
       const fileName = getFileNameFromUrl(url); // Reutilizamos tu función para el nombre del archivo
       const blobUrl = URL.createObjectURL(blob);
 
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = blobUrl;
       a.download = fileName; // Esto sugiere el nombre del archivo para la descarga
       document.body.appendChild(a);
@@ -358,6 +383,17 @@ export default function ObrasPage() {
       console.error("Error al iniciar la descarga:", error);
       alert("No se pudo descargar el archivo. Inténtalo de nuevo.");
     }
+    const router = useRouter();
+    const [animatingLogo, setAnimatingLogo] = useState(false);
+
+    const handleLogoClick = () => {
+      if (animatingLogo) return; // evitar múltiples clics
+
+      setAnimatingLogo(true);
+      setTimeout(() => {
+        router.push("/"); // redirige a la página principal
+      }, 600); // espera a que termine la animación
+    };
   };
   // --- Fin funciones modal ---
 
@@ -370,20 +406,29 @@ export default function ObrasPage() {
         } bg-gray-900 shadow-lg border-b border-purple-800`}
       >
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center min-h-[72px] sm:min-h-[80px]">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+          <div
+            onClick={handleLogoClick}
+            className="flex items-center space-x-2 cursor-pointer"
+          >
+            <div
+              className={`relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 transition-transform duration-700 ease-in-out ${
+                animatingLogo ? "rotate-[360deg]" : ""
+              }`}
+            >
               <Image
                 src="/AURA.png"
                 alt="Logo AURA"
                 fill
                 style={{ objectFit: "cover" }}
                 sizes="(max-width: 640px) 48px, (max-width: 768px) 64px, 80px"
+                
+                  className="rounded-xl shadow-lg transition-transform duration-500 ease-in-out hover:scale-110 hover:rotate-3"
               />
             </div>
             <span className="hidden sm:inline text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap">
               AURA
             </span>
-          </Link>
+          </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-purple-400 text-center flex-grow mx-2">
             OBRAS PUBLICADAS
           </h1>
@@ -428,7 +473,9 @@ export default function ObrasPage() {
                     {/* Botones para mostrar los formularios de login/registro */}
                     <button
                       onClick={() => {
-                        setShowAuthForm(showAuthForm === "login" ? null : "login");
+                        setShowAuthForm(
+                          showAuthForm === "login" ? null : "login"
+                        );
                         setAuthMessage("");
                       }}
                       className="flex items-center w-full px-4 py-3 text-left text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors duration-200 text-base font-semibold mb-2"
@@ -437,7 +484,9 @@ export default function ObrasPage() {
                     </button>
                     <button
                       onClick={() => {
-                        setShowAuthForm(showAuthForm === "register" ? null : "register");
+                        setShowAuthForm(
+                          showAuthForm === "register" ? null : "register"
+                        );
                         setAuthMessage("");
                       }}
                       className="flex items-center w-full px-4 py-3 text-left text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 text-base font-semibold mb-3"
@@ -447,8 +496,13 @@ export default function ObrasPage() {
 
                     {/* Formularios pequeños (condicionales) */}
                     {showAuthForm === "login" && (
-                      <form onSubmit={handleInlineLogin} className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg">
-                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">Login</h3>
+                      <form
+                        onSubmit={handleInlineLogin}
+                        className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg"
+                      >
+                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">
+                          Login
+                        </h3>
                         <div>
                           <input
                             type="email"
@@ -480,8 +534,13 @@ export default function ObrasPage() {
                     )}
 
                     {showAuthForm === "register" && (
-                      <form onSubmit={handleInlineRegister} className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg">
-                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">Registro</h3>
+                      <form
+                        onSubmit={handleInlineRegister}
+                        className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg"
+                      >
+                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">
+                          Registro
+                        </h3>
                         <div>
                           <input
                             type="email"
@@ -498,7 +557,9 @@ export default function ObrasPage() {
                             placeholder="Contraseña"
                             className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
                             value={registerPassword}
-                            onChange={(e) => setRegisterPassword(e.target.value)}
+                            onChange={(e) =>
+                              setRegisterPassword(e.target.value)
+                            }
                             required
                           />
                         </div>
@@ -515,7 +576,8 @@ export default function ObrasPage() {
                     {authMessage && (
                       <p
                         className={`mt-4 text-center text-sm ${
-                          authMessage.includes("éxito") || authMessage.includes("Revisa tu email")
+                          authMessage.includes("éxito") ||
+                          authMessage.includes("Revisa tu email")
                             ? "text-green-400"
                             : "text-red-400"
                         }`}
@@ -584,18 +646,41 @@ export default function ObrasPage() {
                   {fileType === "pdf" && (
                     <div className="flex flex-col items-center justify-center text-purple-400">
                       <FileText className="w-24 h-24 mb-2" />
-                      <p className="text-lg font-semibold text-center px-4">Documento PDF</p>
+                      <p className="text-lg font-semibold text-center px-4">
+                        Documento PDF
+                      </p>
                     </div>
                   )}
-                  {(fileType === "word" || fileType === "powerpoint" || fileType === "excel" || fileType === "text" || fileType === "archive" || fileType === "unknown") && (
+                  {(fileType === "word" ||
+                    fileType === "powerpoint" ||
+                    fileType === "excel" ||
+                    fileType === "text" ||
+                    fileType === "archive" ||
+                    fileType === "unknown") && (
                     <div className="flex flex-col items-center justify-center text-purple-400">
-                      {fileType === "word" && <FileText className="w-24 h-24 mb-2" />}
-                      {fileType === "powerpoint" && <FileVideo className="w-24 h-24 mb-2" />} {/* Using video icon for presentation */}
-                      {fileType === "excel" && <FileText className="w-24 h-24 mb-2" />}
-                      {fileType === "text" && <FileText className="w-24 h-24 mb-2" />}
-                      {fileType === "archive" && <FileArchive className="w-24 h-24 mb-2" />}
-                      {fileType === "unknown" && <FileText className="w-24 h-24 mb-2" />}
-                      <p className="text-lg font-semibold text-center px-4">Haz clic para ver/descargar {fileType === "unknown" ? "el archivo" : fileType}</p>
+                      {fileType === "word" && (
+                        <FileText className="w-24 h-24 mb-2" />
+                      )}
+                      {fileType === "powerpoint" && (
+                        <FileVideo className="w-24 h-24 mb-2" />
+                      )}{" "}
+                      {/* Using video icon for presentation */}
+                      {fileType === "excel" && (
+                        <FileText className="w-24 h-24 mb-2" />
+                      )}
+                      {fileType === "text" && (
+                        <FileText className="w-24 h-24 mb-2" />
+                      )}
+                      {fileType === "archive" && (
+                        <FileArchive className="w-24 h-24 mb-2" />
+                      )}
+                      {fileType === "unknown" && (
+                        <FileText className="w-24 h-24 mb-2" />
+                      )}
+                      <p className="text-lg font-semibold text-center px-4">
+                        Haz clic para ver/descargar{" "}
+                        {fileType === "unknown" ? "el archivo" : fileType}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -637,7 +722,9 @@ export default function ObrasPage() {
                           obra.has_liked ? "fill-current text-red-500" : ""
                         }`}
                       />
-                      <span className="font-bold text-lg">{obra.likes ?? 0}</span>
+                      <span className="font-bold text-lg">
+                        {obra.likes ?? 0}
+                      </span>
                     </button>
                     {/* Puedes añadir un botón para comentarios si implementas esa funcionalidad */}
                   </div>
@@ -658,7 +745,9 @@ export default function ObrasPage() {
         >
           <div
             className={`relative bg-gray-900 rounded-lg shadow-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${
-              isClosingModal ? "scale-90 opacity-0" : "scale-100 opacity-100 animate-zoom-in"
+              isClosingModal
+                ? "scale-90 opacity-0"
+                : "scale-100 opacity-100 animate-zoom-in"
             }`}
             onClick={(e) => e.stopPropagation()} // Evita que el clic en el contenido cierre el modal
           >
@@ -726,7 +815,8 @@ export default function ObrasPage() {
                 <div className="flex flex-col items-center justify-center p-4 text-center">
                   <FileText className="w-32 h-32 text-purple-400 mb-4" />
                   <p className="text-xl text-gray-200 mb-4">
-                    Este tipo de archivo no puede ser previsualizado directamente.
+                    Este tipo de archivo no puede ser previsualizado
+                    directamente.
                   </p>
                   {/* El botón de descarga ahora está fuera de esta condicional y es global */}
                 </div>
@@ -734,22 +824,33 @@ export default function ObrasPage() {
             </div>
 
             <div className="text-gray-200 space-y-3">
-              <p className="text-lg leading-relaxed">{selectedObra.descripcion}</p>
+              <p className="text-lg leading-relaxed">
+                {selectedObra.descripcion}
+              </p>
               <p className="text-purple-300 font-semibold">
-                Contacto: <span className="text-gray-300">{selectedObra.contacto}</span>
+                Contacto:{" "}
+                <span className="text-gray-300">{selectedObra.contacto}</span>
               </p>
               <p className="text-gray-400 text-sm">
-                Publicado el: {new Date(selectedObra.fecha).toLocaleDateString()}
+                Publicado el:{" "}
+                {new Date(selectedObra.fecha).toLocaleDateString()}
               </p>
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center space-x-2">
                   <Heart className="w-6 h-6 text-red-500 fill-current" />
-                  <span className="font-bold text-xl">{selectedObra.likes ?? 0}</span>
+                  <span className="font-bold text-xl">
+                    {selectedObra.likes ?? 0}
+                  </span>
                   <span className="text-gray-400">me gusta</span>
                 </div>
                 {/* Botón de Descargar siempre presente en el modal */}
                 <button
-                  onClick={() => handleDownload(selectedObra.url_archivo, selectedObra.titulo)}
+                  onClick={() =>
+                    handleDownload(
+                      selectedObra.url_archivo,
+                      selectedObra.titulo
+                    )
+                  }
                   className="flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
                 >
                   <Download className="w-5 h-5 mr-2" /> Descargar
