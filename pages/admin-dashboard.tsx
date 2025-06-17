@@ -1,4 +1,3 @@
-// pages/admin-dashboard.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -7,10 +6,12 @@ import { useRouter } from "next/router";
 type Obra = {
   id: number;
   titulo: string;
+  autor: string;
   descripcion: string;
   url_archivo: string;
   contacto: string;
   fecha: string;
+  aprobada: boolean;
 };
 
 export default function AdminDashboardPage() {
@@ -18,81 +19,76 @@ export default function AdminDashboardPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [usuario, setUsuario] = useState("");
   const [obras, setObras] = useState<Obra[]>([]);
+  // Corrección aquí: Especificar el tipo para useState
+  const [seccion, setSeccion] = useState<"inicio" | "pendientes" | "aprobadas">("inicio");
   const [scrollUp, setScrollUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Efecto para verificar el estado de la sesión al cargar la página
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // *** CAMBIO CLAVE AQUÍ: Usamos sessionStorage en lugar de localStorage ***
-      const storedLoggedIn = sessionStorage.getItem("adminLoggedIn");
-      const storedUser = sessionStorage.getItem("adminUser");
-      if (storedLoggedIn === "true" && storedUser) {
-        setLoggedIn(true);
-        setUsuario(storedUser);
-      } else {
-        // Si no está logueado, redirige a la página de login
-        router.replace("/admin-login");
-      }
+    const storedLoggedIn = sessionStorage.getItem("adminLoggedIn");
+    const storedUser = sessionStorage.getItem("adminUser");
+    if (storedLoggedIn === "true" && storedUser) {
+      setLoggedIn(true);
+      setUsuario(storedUser);
+    } else {
+      router.replace("/admin-login");
     }
   }, [router]);
 
-  const cargarObras = async () => {
+  const cargarObras = async (aprobada: boolean) => {
     const { data, error } = await supabase
       .from("obras")
-      .select("id, titulo, descripcion, url_archivo, contacto, fecha")
+      .select("id, titulo, autor, descripcion, url_archivo, contacto, fecha, aprobada")
+      .eq("aprobada", aprobada)
       .order("id", { ascending: false });
 
     if (error) {
       console.error("Error al cargar obras:", error);
-      return;
+    } else {
+      setObras(data || []);
     }
-    setObras(data || []);
+  };
+
+  const aprobarObra = async (id: number) => {
+    const { error } = await supabase
+      .from("obras")
+      .update({ aprobada: true })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error al aprobar obra: " + error.message);
+    } else {
+      alert("Obra aprobada con éxito");
+      cargarObras(false);
+    }
   };
 
   const eliminarObra = async (id: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta obra? Esta acción es irreversible.")) {
-      return;
-    }
+    const confirmar = confirm("¿Eliminar esta obra? Esta acción es irreversible.");
+    if (!confirmar) return;
 
+    // Obtener url del archivo para borrar en storage
     const { data: selectData, error: selectError } = await supabase
       .from("obras")
       .select("url_archivo")
       .eq("id", id)
       .single();
 
-    if (selectError) {
-      console.error("Error al obtener la URL del archivo de la DB:", selectError);
-      alert("Error al intentar eliminar la obra (no se encontró el archivo en la DB).");
+    if (selectError || !selectData) {
+      alert("Error al obtener archivo.");
       return;
     }
 
-    if (selectData && selectData.url_archivo) {
-      console.log("URL completa del archivo obtenida de la DB:", selectData.url_archivo);
-      const urlParts = selectData.url_archivo.split("/");
-      const encodedFileName = urlParts[urlParts.length - 1];
-      const filePath = decodeURIComponent(encodedFileName);
+    const urlParts = selectData.url_archivo.split("/");
+    const fileName = decodeURIComponent(urlParts[urlParts.length - 1]);
 
-      console.log("Nombre del archivo (filePath) extraído para borrar (decodificado):", filePath);
+    const { error: deleteStorageError } = await supabase.storage
+      .from("obras-archivos")
+      .remove([fileName]);
 
-      if (filePath) {
-        const { error: deleteStorageError } = await supabase.storage
-          .from("obras-archivos")
-          .remove([filePath]);
-
-        if (deleteStorageError) {
-          console.error("Error al eliminar el archivo del storage:", deleteStorageError);
-          alert("Error al eliminar el archivo del storage: " + deleteStorageError.message);
-        } else {
-          console.log("Archivo borrado del storage exitosamente:", filePath);
-        }
-      } else {
-        console.warn("No se pudo extraer el nombre del archivo de la URL:", selectData.url_archivo);
-        alert("Advertencia: No se pudo identificar el archivo para borrar del storage.");
-      }
-    } else {
-      console.warn("No se encontró 'url_archivo' para la obra con ID:", id);
-      alert("Advertencia: No se encontró la URL del archivo en la base de datos.");
+    if (deleteStorageError) {
+      alert("Error al eliminar archivo del storage.");
+      return;
     }
 
     const { error: deleteDbError } = await supabase
@@ -101,17 +97,15 @@ export default function AdminDashboardPage() {
       .eq("id", id);
 
     if (deleteDbError) {
-      console.error("Error al eliminar de la base de datos:", deleteDbError);
-      alert("Error al eliminar la obra de la base de datos: " + deleteDbError.message);
+      alert("Error al eliminar obra de la base de datos.");
     } else {
-      cargarObras();
-      console.log("Obra eliminada de la base de datos y UI actualizada.");
       alert("Obra eliminada con éxito.");
+      // Recargar obras según sección actual
+      cargarObras(seccion === "aprobadas");
     }
   };
 
   const handleLogout = () => {
-    // *** CAMBIO CLAVE AQUÍ: Usamos sessionStorage.removeItem ***
     sessionStorage.removeItem("adminLoggedIn");
     sessionStorage.removeItem("adminUser");
     setLoggedIn(false);
@@ -130,15 +124,18 @@ export default function AdminDashboardPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
+  // Cuando cambies de sección carga las obras correspondientes
   useEffect(() => {
     if (loggedIn) {
-      cargarObras();
+      if (seccion === "pendientes") {
+        cargarObras(false);
+      } else if (seccion === "aprobadas") {
+        cargarObras(true);
+      }
     }
-  }, [loggedIn]);
+  }, [loggedIn, seccion]);
 
-  if (!loggedIn) {
-    return null;
-  }
+  if (!loggedIn) return null;
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -162,62 +159,114 @@ export default function AdminDashboardPage() {
       </header>
 
       <main className="pt-24 p-6 max-w-5xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-purple-400 text-center mb-10 drop-shadow-lg tracking-wide">
-          Obras publicas
-        </h1>
-        <div className="flex flex-col gap-8">
-          {obras.length === 0 ? (
-            <p className="text-center text-xl text-purple-300 italic animate-fade-in">
-              No hay obras aún.
-            </p>
-          ) : (
-            obras.map((obra) => (
-              <div
-                key={obra.id}
-                className="bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-700 flex flex-col md:flex-row gap-6 animate-fade-in"
-              >
-                <div className="flex-shrink-0">
-                  {obra.url_archivo.includes("video") ? (
-                    <video
-                      controls
-                      className="w-full md:w-64 h-auto rounded-lg shadow-md border border-purple-800 object-cover"
-                      src={obra.url_archivo}
-                    ></video>
-                  ) : (
-                    <img
-                      src={obra.url_archivo}
-                      alt={obra.titulo}
-                      className="w-full md:w-64 h-auto rounded-lg shadow-md border border-purple-800 object-cover"
-                    />
-                  )}
-                </div>
-                <div className="flex-grow">
-                  <h2 className="text-3xl font-semibold text-purple-400 mb-2">
-                    {obra.titulo}
-                  </h2>
-                  <p className="text-gray-300 mb-2 text-lg">
-                    <strong className="text-purple-300">Descripción:</strong>{" "}
-                    {obra.descripcion}
-                  </p>
-                  <p className="text-gray-300 mb-2 text-lg">
-                    <strong className="text-purple-300">Contacto:</strong>{" "}
-                    {obra.contacto}
-                  </p>
-                  <p className="text-gray-400 text-sm italic mb-4">
-                    <strong className="text-purple-400">Subido el:</strong>{" "}
-                    {new Date(obra.fecha).toLocaleString()}
-                  </p>
-                  <button
-                    onClick={() => eliminarObra(obra.id)}
-                    className="px-6 py-3 bg-red-700 text-white font-bold rounded-lg hover:bg-red-800 transition-all duration-300 shadow-md hover:shadow-lg"
+        {seccion === "inicio" && (
+          <div className="flex flex-col md:flex-row gap-10 justify-center items-center min-h-[300px]">
+            <button
+              onClick={() => setSeccion("pendientes")}
+              className="bg-purple-700 hover:bg-purple-800 px-10 py-8 rounded-3xl text-3xl font-bold shadow-lg transition"
+            >
+              Obras Pendientes
+            </button>
+            <button
+              onClick={() => setSeccion("aprobadas")}
+              className="bg-green-700 hover:bg-green-800 px-10 py-8 rounded-3xl text-3xl font-bold shadow-lg transition"
+            >
+              Obras Aprobadas
+            </button>
+          </div>
+        )}
+
+        {(seccion === "pendientes" || seccion === "aprobadas") && (
+          <>
+            <button
+              onClick={() => setSeccion("inicio")}
+              className="mb-6 px-6 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 font-semibold"
+            >
+              ← Volver al inicio
+            </button>
+
+            <h1 className="text-4xl font-extrabold text-purple-400 text-center mb-10">
+              {seccion === "pendientes"
+                ? "Obras pendientes de aprobación"
+                : "Obras aprobadas"}
+            </h1>
+
+            <div className="flex flex-col gap-8">
+              {obras.length === 0 ? (
+                <p className="text-center text-xl text-purple-300 italic animate-fade-in">
+                  {seccion === "pendientes"
+                    ? "No hay obras pendientes."
+                    : "No hay obras aprobadas."}
+                </p>
+              ) : (
+                obras.map((obra) => (
+                  <div
+                    key={obra.id}
+                    className="bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-700 flex flex-col md:flex-row gap-6 animate-fade-in"
                   >
-                    Eliminar Obra
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                    <div className="flex-shrink-0 cursor-pointer" onClick={() => window.open(obra.url_archivo, "_blank")}>
+                      {obra.url_archivo.includes("video") ? (
+                        <video
+                          controls
+                          className="w-full md:w-64 h-auto rounded-lg shadow-md border border-purple-800 object-cover"
+                          src={obra.url_archivo}
+                        />
+                      ) : (
+                        <img
+                          src={obra.url_archivo}
+                          alt={obra.titulo}
+                          className="w-full md:w-64 h-auto rounded-lg shadow-md border border-purple-800 object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-grow">
+                      <h2 className="text-3xl font-semibold text-purple-400 mb-2">{obra.titulo}</h2>
+                      <p className="text-gray-300 mb-2 text-lg">
+                        <strong className="text-purple-300">Autor:</strong> {obra.autor}
+                      </p>
+                      <p className="text-gray-300 mb-2 text-lg">
+                        <strong className="text-purple-300">Descripción:</strong> {obra.descripcion}
+                      </p>
+                      <p className="text-gray-300 mb-2 text-lg">
+                        <strong className="text-purple-300">Contacto:</strong> {obra.contacto}
+                      </p>
+                      <p className="text-gray-400 text-sm italic mb-4">
+                        <strong className="text-purple-400">Subido el:</strong>{" "}
+                        {new Date(obra.fecha).toLocaleString()}
+                      </p>
+
+                      <div className="flex gap-4">
+                        {seccion === "pendientes" ? (
+                          <>
+                            <button
+                              onClick={() => aprobarObra(obra.id)}
+                              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all"
+                            >
+                              Aprobar
+                            </button>
+                            <button
+                              onClick={() => eliminarObra(obra.id)}
+                              className="px-6 py-3 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg transition-all"
+                            >
+                              Rechazar
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => eliminarObra(obra.id)}
+                            className="px-6 py-3 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg transition-all"
+                          >
+                            Borrar obra
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

@@ -1,15 +1,18 @@
+// login.tsx
 "use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react"; // Asegúrate de tener lucide-react instalado
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // Nuevo estado para visibilidad de contraseña
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -49,46 +52,54 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label htmlFor="email" className="block mb-2 text-purple-300 font-medium">
-              Email:
+              Correo Electrónico:
             </label>
             <input
               type="email"
               id="email"
-              placeholder="tu@correo.com"
+              placeholder="tu@ejemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full p-4 rounded-lg bg-gray-800 border border-purple-600 text-gray-100"
             />
           </div>
-          <div>
+          <div className="relative"> {/* Contenedor relative para el ícono */}
             <label htmlFor="password" className="block mb-2 text-purple-300 font-medium">
               Contraseña:
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"} // Tipo dinámico
               id="password"
               placeholder="Tu contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-4 rounded-lg bg-gray-800 border border-purple-600 text-gray-100"
+              className="w-full p-4 rounded-lg bg-gray-800 border border-purple-600 text-gray-100 pr-12" // Añade padding a la derecha
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center pt-8 text-gray-400 hover:text-purple-400"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-lg"
+            className="w-full py-4 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Iniciando..." : "Iniciar Sesión"}
           </button>
           <button
-          type="button"
-          onClick={() => router.push("/")}
-          className="w-full mt-4 px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
-        >
-          Volver al inicio
-        </button>
+            type="button"
+            onClick={() => router.push("/")}
+            className="w-full mt-4 px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
+          >
+            Volver al inicio
+          </button>
         </form>
 
         {message && (
@@ -107,6 +118,11 @@ export default function LoginPage() {
           ¿No tienes una cuenta?{" "}
           <Link href="/register" className="text-purple-400 hover:text-purple-300">
             Regístrate aquí
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-gray-400">
+          <Link href="/forgot-password" className="text-purple-400 hover:text-purple-300 underline">
+            ¿Olvidaste tu contraseña?
           </Link>
         </p>
       </div>

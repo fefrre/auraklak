@@ -1,5 +1,5 @@
 "use client";
-
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
@@ -18,7 +18,8 @@ import {
   FileImage,
   FileArchive,
   Download,
-} from "lucide-react"; // Import new icons, including 'Download'
+  Instagram, // Asegúrate de que Instagram esté importado
+} from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 
@@ -26,6 +27,7 @@ import { useRouter } from "next/router";
 type Obra = {
   id: number;
   titulo: string;
+  autor: string;
   descripcion: string;
   url_archivo: string;
   contacto: string;
@@ -57,6 +59,8 @@ export default function ObrasPage() {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   // Estados para el header dinámico
   const [scrollUp, setScrollUp] = useState(true);
@@ -81,15 +85,15 @@ export default function ObrasPage() {
   const [animatingLogo, setAnimatingLogo] = useState(false);
 
   const handleLogoClick = () => {
-    if (animatingLogo) return; // Evitar múltiples clics
+    if (animatingLogo) return;
     setAnimatingLogo(true);
     setTimeout(() => {
-      router.push("/"); // Redirige al index después de animar
-    }, 600); // Duración de la animación (debe coincidir con la transición)
+      router.push("/");
+    }, 600);
   };
   // --- Nuevos estados para el modal de imagen ---
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
-  const [isClosingModal, setIsClosingModal] = useState(false); // Para la animación de cierre del modal
+  const [isClosingModal, setIsClosingModal] = useState(false);
   // --- Fin nuevos estados ---
 
   // Efecto para cerrar el menú si se hace clic fuera
@@ -112,13 +116,12 @@ export default function ObrasPage() {
       const urlObj = new URL(url);
       const pathname = urlObj.pathname;
       const parts = pathname.split("/");
-      // Eliminar el prefijo 'storage/v1/object/public/obras/' si existe
       const fileNameWithQuery = parts[parts.length - 1];
-      const fileNameParts = fileNameWithQuery.split("?"); // Remove query parameters
-      return decodeURIComponent(fileNameParts[0]); // Decode URI component
+      const fileNameParts = fileNameWithQuery.split("?");
+      return decodeURIComponent(fileNameParts[0]);
     } catch (e) {
       console.error("Error parsing URL for file name:", e);
-      return "archivo_descarga"; // Fallback name
+      return "archivo_descarga";
     }
   };
 
@@ -145,13 +148,11 @@ export default function ObrasPage() {
     });
 
     return () => {
-      // Limpiar la suscripción cuando el componente se desmonte
       if (subscription) {
-        // Asegura que la suscripción existe antes de intentar anularla
         subscription.unsubscribe();
       }
     };
-  }, []); // Dependencias vacías para que se ejecute solo una vez al montar
+  }, []);
 
   // Función para cargar las obras y los likes del usuario
   const cargarObras = useCallback(async () => {
@@ -160,7 +161,10 @@ export default function ObrasPage() {
 
     const { data: obrasData, error: obrasError } = await supabase
       .from("obras")
-      .select("id, titulo, descripcion, url_archivo, contacto, fecha, likes")
+      .select(
+        "id, titulo, autor, descripcion, url_archivo, contacto, fecha, likes"
+      )
+      .eq("aprobada", true)
       .order("id", { ascending: false });
 
     if (obrasError) {
@@ -344,20 +348,18 @@ export default function ObrasPage() {
 
   const openModal = (obra: Obra) => {
     setSelectedObra(obra);
-    setIsClosingModal(false); // Asegura que no está en estado de cierre
-    document.body.style.overflow = "hidden"; // Deshabilita el scroll del fondo
+    setIsClosingModal(false);
+    document.body.style.overflow = "hidden";
   };
 
   const closeModal = () => {
-    setIsClosingModal(true); // Inicia la animación de cierre
-    document.body.style.overflow = "auto"; // Habilita el scroll del fondo
-    // Retrasar el cierre completo para que la animación se complete
+    setIsClosingModal(true);
+    document.body.style.overflow = "auto";
     setTimeout(() => {
       setSelectedObra(null);
-    }, 300); // Duración de la animación (0.3s)
+    }, 300);
   };
 
-  // --- AQUÍ ES DONDE VA LA FUNCIÓN handleDownload ---
   const handleDownload = async (url: string, title: string) => {
     try {
       const response = await fetch(url);
@@ -368,34 +370,36 @@ export default function ObrasPage() {
       }
 
       const blob = await response.blob();
-      const fileName = getFileNameFromUrl(url); // Reutilizamos tu función para el nombre del archivo
+      const fileName = getFileNameFromUrl(url);
       const blobUrl = URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = fileName; // Esto sugiere el nombre del archivo para la descarga
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
 
-      URL.revokeObjectURL(blobUrl); // Limpia la URL del objeto Blob
+      URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Error al iniciar la descarga:", error);
       alert("No se pudo descargar el archivo. Inténtalo de nuevo.");
     }
-    const router = useRouter();
-    const [animatingLogo, setAnimatingLogo] = useState(false);
-
-    const handleLogoClick = () => {
-      if (animatingLogo) return; // evitar múltiples clics
-
-      setAnimatingLogo(true);
-      setTimeout(() => {
-        router.push("/"); // redirige a la página principal
-      }, 600); // espera a que termine la animación
-    };
   };
-  // --- Fin funciones modal ---
+
+  const isValidUrl = (text: string) => {
+    try {
+      new URL(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Nueva función para verificar si es una URL de Instagram
+  const isInstagramUrl = (url: string) => {
+    return url.includes("instagram.com");
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -421,8 +425,7 @@ export default function ObrasPage() {
                 fill
                 style={{ objectFit: "cover" }}
                 sizes="(max-width: 640px) 48px, (max-width: 768px) 64px, 80px"
-                
-                  className="rounded-xl shadow-lg transition-transform duration-500 ease-in-out hover:scale-110 hover:rotate-3"
+                className="rounded-xl shadow-lg transition-transform duration-500 ease-in-out hover:scale-110 hover:rotate-3"
               />
             </div>
             <span className="hidden sm:inline text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap">
@@ -514,14 +517,29 @@ export default function ObrasPage() {
                           />
                         </div>
                         <div>
-                          <input
-                            type="password"
-                            placeholder="Contraseña"
-                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            required
-                          />
+                          <div className="relative">
+                            <input
+                              type={showLoginPassword ? "text" : "password"}
+                              placeholder="Contraseña"
+                              className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              required
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-2 top-2 text-purple-400"
+                              onClick={() =>
+                                setShowLoginPassword(!showLoginPassword)
+                              }
+                            >
+                              {showLoginPassword ? (
+                                <EyeOff size={18} />
+                              ) : (
+                                <Eye size={18} />
+                              )}
+                            </button>
+                          </div>
                         </div>
                         <button
                           type="submit"
@@ -552,16 +570,31 @@ export default function ObrasPage() {
                           />
                         </div>
                         <div>
-                          <input
-                            type="password"
-                            placeholder="Contraseña"
-                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
-                            value={registerPassword}
-                            onChange={(e) =>
-                              setRegisterPassword(e.target.value)
-                            }
-                            required
-                          />
+                          <div className="relative">
+                            <input
+                              type={showRegisterPassword ? "text" : "password"}
+                              placeholder="Contraseña"
+                              className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                              value={registerPassword}
+                              onChange={(e) =>
+                                setRegisterPassword(e.target.value)
+                              }
+                              required
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-2 top-2 text-purple-400"
+                              onClick={() =>
+                                setShowRegisterPassword(!showRegisterPassword)
+                              }
+                            >
+                              {showRegisterPassword ? (
+                                <EyeOff size={18} />
+                              ) : (
+                                <Eye size={18} />
+                              )}
+                            </button>
+                          </div>
                         </div>
                         <button
                           type="submit"
@@ -622,7 +655,7 @@ export default function ObrasPage() {
                 {/* Contenido multimedia (imagen/video/documento) - Agregamos onClick */}
                 <div
                   className="relative w-full h-60 bg-gray-800 flex items-center justify-center overflow-hidden cursor-pointer"
-                  onClick={() => openModal(obra)} // Aquí se llama a openModal
+                  onClick={() => openModal(obra)}
                 >
                   {fileType === "image" && (
                     <Image
@@ -691,31 +724,54 @@ export default function ObrasPage() {
                     {obra.titulo}
                   </h2>
                   <p className="text-gray-300 text-base mb-3 overflow-hidden text-ellipsis line-clamp-3">
+                    <strong className="text-purple-300">Autor:</strong>{" "}
+                    {obra.autor}
+                  </p>
+                  <p className="text-gray-300 text-base mb-3 overflow-hidden text-ellipsis line-clamp-3">
                     {obra.descripcion}
                   </p>
-                  <p className="text-gray-400 text-sm italic mb-2">
+                  <p className="text-gray-400 text-sm italic mb-2 flex items-center gap-1">
                     <strong className="text-purple-300">Contacto:</strong>{" "}
-                    {obra.contacto}
+                    {obra.contacto && obra.contacto !== "Anónimo" ? (
+                      <>
+                        <span>{obra.contacto}</span>
+                        {isValidUrl(obra.contacto) &&
+                          isInstagramUrl(obra.contacto) && (
+                            <a
+                              href={obra.contacto}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-1 text-purple-400 hover:text-purple-500 transition-colors"
+                              aria-label="Ir a Instagram del contacto"
+                            >
+                              <Instagram className="w-5 h-5" />{" "}
+                              {/* Icono pequeño en el contacto */}
+                            </a>
+                          )}
+                      </>
+                    ) : (
+                      obra.contacto
+                    )}
                   </p>
                   <p className="text-gray-500 text-xs mt-auto">
                     Subido el: {new Date(obra.fecha).toLocaleDateString()}
                   </p>
 
-                  {/* Sección de acciones (Likes) */}
+                  {/* Sección de acciones (Likes e Instagram) */}
                   <div className="flex items-center justify-between mt-4 border-t border-gray-700 pt-4">
                     <button
                       onClick={() =>
                         handleLike(obra.id, obra.likes, obra.has_liked ?? false)
                       }
                       className={`flex items-center space-x-2 transition-colors duration-200 ${
-                        user // Si hay un usuario, el color depende de si ha dado like
+                        user
                           ? obra.has_liked
                             ? "text-red-500 hover:text-red-600"
                             : "text-purple-300 hover:text-purple-500"
-                          : "text-gray-500 cursor-not-allowed" // Deshabilitado si no hay usuario
+                          : "text-gray-500 cursor-not-allowed"
                       }`}
                       aria-label={`Dar me gusta a ${obra.titulo}`}
-                      disabled={!user} // Deshabilita el botón si no hay usuario
+                      disabled={!user}
                     >
                       <Heart
                         className={`w-6 h-6 ${
@@ -726,7 +782,21 @@ export default function ObrasPage() {
                         {obra.likes ?? 0}
                       </span>
                     </button>
-                    {/* Puedes añadir un botón para comentarios si implementas esa funcionalidad */}
+                    {obra.contacto &&
+                      obra.contacto !== "Anónimo" &&
+                      isValidUrl(obra.contacto) &&
+                      isInstagramUrl(obra.contacto) && (
+                        <a
+                          href={obra.contacto}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-600 hover:text-gray-400 transition-colors"
+                          aria-label="Ir a Instagram"
+                        >
+                          <Instagram className="w-7 h-7" />{" "}
+                          {/* Icono más grande en la sección de likes */}
+                        </a>
+                      )}
                   </div>
                 </div>
               </div>
@@ -741,7 +811,7 @@ export default function ObrasPage() {
           className={`fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
             isClosingModal ? "opacity-0" : "opacity-100"
           }`}
-          onClick={closeModal} // Permite cerrar el modal haciendo clic fuera
+          onClick={closeModal}
         >
           <div
             className={`relative bg-gray-900 rounded-lg shadow-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out ${
@@ -749,7 +819,7 @@ export default function ObrasPage() {
                 ? "scale-90 opacity-0"
                 : "scale-100 opacity-100 animate-zoom-in"
             }`}
-            onClick={(e) => e.stopPropagation()} // Evita que el clic en el contenido cierre el modal
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={closeModal}
@@ -770,10 +840,10 @@ export default function ObrasPage() {
                   src={selectedObra.url_archivo}
                   alt={selectedObra.titulo}
                   fill
-                  style={{ objectFit: "contain" }} // 'contain' para que la imagen se vea completa
+                  style={{ objectFit: "contain" }}
                   className="rounded-lg"
                   sizes="100vw"
-                  priority={true} // Prioriza la carga
+                  priority={true}
                 />
               )}
               {getFileType(selectedObra.url_archivo) === "video" && (
@@ -818,18 +888,40 @@ export default function ObrasPage() {
                     Este tipo de archivo no puede ser previsualizado
                     directamente.
                   </p>
-                  {/* El botón de descarga ahora está fuera de esta condicional y es global */}
                 </div>
               )}
             </div>
 
             <div className="text-gray-200 space-y-3">
               <p className="text-lg leading-relaxed">
+                <strong className="text-purple-300">Autor:</strong>{" "}
+                {selectedObra.autor}
+              </p>
+              <p className="text-lg leading-relaxed">
                 {selectedObra.descripcion}
               </p>
-              <p className="text-purple-300 font-semibold">
+              <p className="text-purple-300 font-semibold flex items-center gap-1">
                 Contacto:{" "}
-                <span className="text-gray-300">{selectedObra.contacto}</span>
+                {selectedObra.contacto &&
+                selectedObra.contacto !== "Anónimo" ? (
+                  <>
+                    <span>{selectedObra.contacto}</span>
+                    {isValidUrl(selectedObra.contacto) &&
+                      isInstagramUrl(selectedObra.contacto) && (
+                        <a
+                          href={selectedObra.contacto}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-1 text-purple-400 hover:text-purple-500 transition-colors"
+                          aria-label="Ir a Instagram del contacto"
+                        >
+                          <Instagram className="w-5 h-5" />
+                        </a>
+                      )}
+                  </>
+                ) : (
+                  <span className="text-gray-300">{selectedObra.contacto}</span>
+                )}
               </p>
               <p className="text-gray-400 text-sm">
                 Publicado el:{" "}

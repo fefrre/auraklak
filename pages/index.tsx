@@ -1,21 +1,25 @@
+// index.tsx
 "use client";
 import Link from "next/link";
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { Eye, EyeOff } from "lucide-react"; // Importa los íconos de lucide-react
 
 export default function HomePage() {
   const router = useRouter();
 
   // Estados para formulario de obra
   const [titulo, setTitulo] = useState("");
+  const [autor, setAutor] = useState("");
   const [contacto, setContacto] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // Estados para menú móvil
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,6 +31,7 @@ export default function HomePage() {
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [showModalPassword, setShowModalPassword] = useState(false); // Nuevo estado para visibilidad de contraseña en el modal
 
   // Manejar envío de obra
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,6 +44,25 @@ export default function HomePage() {
       setMensaje("Por favor selecciona un archivo.");
       setIsSubmitting(false);
       return;
+    }
+
+    if (!titulo.trim()) {
+      setMensaje("Por favor ingresa un título para tu obra.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!isAnonymous) {
+      if (!autor.trim()) {
+        setMensaje("Por favor ingresa el nombre del autor de la obra.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!contacto.trim()) {
+        setMensaje("Por favor ingresa tu información de contacto.");
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     try {
@@ -57,21 +81,27 @@ export default function HomePage() {
         .from("obras-archivos")
         .getPublicUrl(nombreArchivo).data.publicUrl;
 
-      const { error: dbError } = await supabase.from("obras").insert({
-        titulo,
+      const submissionData = {
+        titulo: titulo,
+        autor: isAnonymous ? "Anónimo" : autor,
         descripcion,
         url_archivo: urlArchivo,
-        contacto,
-      });
+        contacto: isAnonymous ? "Anónimo" : contacto,
+        aprobada: false,
+      };
+
+      const { error: dbError } = await supabase.from("obras").insert(submissionData);
 
       if (dbError) {
         setMensaje("Error al guardar en la base de datos: " + dbError.message);
       } else {
         setMensaje("¡Obra enviada con éxito!");
         setTitulo("");
+        setAutor("");
         setDescripcion("");
         setContacto("");
         setArchivo(null);
+        setIsAnonymous(false);
         setShowSuccessModal(true);
       }
     } catch (error: any) {
@@ -105,10 +135,9 @@ export default function HomePage() {
           setAuthError(error.message);
         } else {
           setShowAuthModal(false);
-          router.reload(); // o redirigir a alguna página segura
+          router.reload();
         }
       } else {
-        // Registro
         const { error } = await supabase.auth.signUp({
           email: authEmail,
           password: authPassword,
@@ -127,7 +156,6 @@ export default function HomePage() {
     }
   };
 
-  // Toggle para cambiar entre login y registro
   const toggleAuthMode = () => {
     setAuthError("");
     setAuthEmail("");
@@ -157,7 +185,8 @@ export default function HomePage() {
             <div className="md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-gray-300 hover:text-purple-400 focus:outline-none"
+                className="text-gray-300 hover:text-purple-400 focus:outline-none transition-transform duration-300 ease-in-out transform hover:rotate-90"
+                aria-label="Toggle mobile menu"
               >
                 <svg
                   className="h-8 w-8"
@@ -181,39 +210,20 @@ export default function HomePage() {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8 text-xl font-semibold text-gray-300">
-              <Link href="/carpanta" className="hover:text-purple-400 transition">
+              <Link
+                href="/carpanta"
+                className="hover:text-purple-400 transition transform hover:scale-105"
+              >
                 Carpanta
               </Link>
 
-              {/* Aquí sustituimos el link a Blacksirena por el menú de Auth */}
               <div className="relative group">
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="hover:text-purple-400 transition cursor-pointer"
+                  className="hover:text-purple-400 transition cursor-pointer transform hover:scale-105"
                 >
                   Cuenta
                 </button>
-                {/* Opcional: dropdown si quieres */}
-                {/* <div className="absolute hidden group-hover:block bg-gray-800 mt-2 rounded shadow-lg py-2 w-32">
-                  <button
-                    onClick={() => {
-                      setAuthMode("login");
-                      setShowAuthModal(true);
-                    }}
-                    className="block w-full px-4 py-2 hover:bg-purple-600 text-left"
-                  >
-                    Iniciar Sesión
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAuthMode("register");
-                      setShowAuthModal(true);
-                    }}
-                    className="block w-full px-4 py-2 hover:bg-purple-600 text-left"
-                  >
-                    Registrarse
-                  </button>
-                </div> */}
               </div>
             </div>
           </div>
@@ -221,10 +231,10 @@ export default function HomePage() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-gray-900 border-t border-purple-800 px-6 pb-4 text-lg space-y-3">
+          <div className="md:hidden bg-gray-900 border-t border-purple-800 py-4 px-6 text-lg space-y-4 animate-slide-down">
             <Link
               href="/carpanta"
-              className="block text-gray-300 hover:text-purple-400"
+              className="block text-gray-300 hover:text-purple-400 py-2 px-3 rounded-md transition-all duration-200 hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
               Carpanta
@@ -235,10 +245,31 @@ export default function HomePage() {
                 setShowAuthModal(true);
                 setMobileMenuOpen(false);
               }}
-              className="block w-full text-left text-gray-300 hover:text-purple-400"
+              className="block w-full text-left text-gray-300 hover:text-purple-400 py-2 px-3 rounded-md transition-all duration-200 hover:bg-gray-800"
             >
               Iniciar Sesión / Registrarse
             </button>
+            <Link
+              href="/forgot-password"
+              className="block text-gray-300 hover:text-purple-400 py-2 px-3 rounded-md transition-all duration-200 hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+            <Link
+              href="/obras"
+              className="block text-gray-300 hover:text-purple-400 py-2 px-3 rounded-md transition-all duration-200 hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Visualizar Obras
+            </Link>
+            <Link
+              href="/admin-login"
+              className="block text-gray-300 hover:text-purple-400 py-2 px-3 rounded-md transition-all duration-200 hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Administrador
+            </Link>
           </div>
         )}
       </nav>
@@ -265,6 +296,32 @@ export default function HomePage() {
           Comparte tu Obra
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Switch de anonimato estilo iOS */}
+          <div className="mb-6 flex items-center justify-between">
+            <label htmlFor="anonymousSwitch" className="text-xl font-medium text-purple-300">
+              Compartir de forma anónima
+            </label>
+            <div
+              className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                isAnonymous ? 'bg-green-500' : 'bg-gray-600'
+              }`}
+              onClick={() => setIsAnonymous(!isAnonymous)}
+            >
+              <input
+                type="checkbox"
+                id="anonymousSwitch"
+                className="opacity-0 w-full h-full absolute cursor-pointer"
+                checked={isAnonymous}
+                onChange={() => setIsAnonymous(!isAnonymous)}
+              />
+              <span
+                className={`absolute top-0.5 left-0.5 w-6 h-6 bg-gray-100 rounded-full shadow-md transform transition-transform duration-200 ${
+                  isAnonymous ? 'translate-x-7' : 'translate-x-0'
+                }`}
+              />
+            </div>
+          </div>
+
           <div>
             <label
               htmlFor="titulo"
@@ -281,6 +338,31 @@ export default function HomePage() {
               className="w-full p-4 border border-purple-600 rounded-lg shadow-inner bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
               style={{ fontStyle: "oblique" }}
               required
+              placeholder="Título de tu obra"
+            />
+          </div>
+
+          {/* Nuevo campo de Autor */}
+          <div>
+            <label
+              htmlFor="autor"
+              className="block text-xl font-medium text-purple-300 mb-2"
+              style={{ fontStyle: "oblique" }}
+            >
+              Autor:
+            </label>
+            <input
+              type="text"
+              id="autor"
+              value={autor}
+              onChange={(e) => setAutor(e.target.value)}
+              className={`w-full p-4 border ${
+                isAnonymous ? 'border-gray-700 bg-gray-800 text-gray-500 cursor-not-allowed' : 'border-purple-600 bg-gray-800 text-gray-100 focus:ring-purple-500 focus:border-purple-500'
+              } rounded-lg shadow-inner placeholder-gray-500 transition-all duration-300`}
+              style={{ fontStyle: "oblique" }}
+              required={!isAnonymous}
+              disabled={isAnonymous}
+              placeholder={isAnonymous ? "Autor anónimo" : "Tu nombre o seudónimo"}
             />
           </div>
 
@@ -314,9 +396,13 @@ export default function HomePage() {
               id="contacto"
               value={contacto}
               onChange={(e) => setContacto(e.target.value)}
-              className="w-full p-4 border border-purple-600 rounded-lg shadow-inner bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+              className={`w-full p-4 border ${
+                isAnonymous ? 'border-gray-700 bg-gray-800 text-gray-500 cursor-not-allowed' : 'border-purple-600 bg-gray-800 text-gray-100 focus:ring-purple-500 focus:border-purple-500'
+              } rounded-lg shadow-inner placeholder-gray-500 transition-all duration-300`}
               style={{ fontStyle: "oblique" }}
-              required
+              required={!isAnonymous}
+              disabled={isAnonymous}
+              placeholder={isAnonymous ? "Contacto no visible" : "Tu correo, redes sociales, etc."}
             />
           </div>
 
@@ -333,6 +419,7 @@ export default function HomePage() {
               onChange={(e) => setArchivo(e.target.files?.[0] || null)}
               className="block w-full p-3 border border-purple-600 rounded-lg bg-gray-800 text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-700 file:text-white hover:file:bg-purple-800 transition-all duration-300"
               accept="image/*,video/*,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,application/x-rar-compressed"
+              required
             />
           </div>
 
@@ -410,14 +497,24 @@ export default function HomePage() {
                 required
                 className="w-full p-3 rounded bg-gray-800 text-gray-100 border border-purple-600 focus:ring-purple-500 focus:border-purple-500"
               />
-              <input
-                type="password"
-                placeholder="Contraseña"
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                required
-                className="w-full p-3 rounded bg-gray-800 text-gray-100 border border-purple-600 focus:ring-purple-500 focus:border-purple-500"
-              />
+              <div className="relative"> {/* Contenedor relative para el ícono */}
+                <input
+                  type={showModalPassword ? "text" : "password"} // Tipo dinámico
+                  placeholder="Contraseña"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  required
+                  className="w-full p-3 rounded bg-gray-800 text-gray-100 border border-purple-600 focus:ring-purple-500 focus:border-purple-500 pr-10" // Añade padding a la derecha
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowModalPassword(!showModalPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-purple-400"
+                  aria-label={showModalPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showModalPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
 
               {authError && (
                 <p className="text-red-500 text-center">{authError}</p>
@@ -426,7 +523,7 @@ export default function HomePage() {
               <button
                 type="submit"
                 disabled={authLoading}
-                className="w-full py-3 bg-purple-700 text-white font-bold rounded hover:bg-purple-800 transition"
+                className="w-full py-3 bg-purple-700 text-white font-bold rounded hover:bg-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {authLoading
                   ? authMode === "login"
@@ -438,6 +535,18 @@ export default function HomePage() {
               </button>
             </form>
 
+            {authMode === "login" && (
+                <p className="mt-4 text-center text-gray-400">
+                    <Link
+                        href="/forgot-password"
+                        className="text-purple-400 font-semibold underline hover:text-purple-300"
+                        onClick={() => setShowAuthModal(false)}
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </Link>
+                </p>
+            )}
+
             <p className="mt-4 text-center text-gray-400">
               {authMode === "login"
                 ? "¿No tienes cuenta? "
@@ -446,7 +555,9 @@ export default function HomePage() {
                 onClick={toggleAuthMode}
                 className="text-purple-400 font-semibold underline hover:text-purple-300"
               >
-                {authMode === "login" ? "Regístrate aquí" : "Inicia sesión aquí"}
+                {authMode === "login"
+                  ? "Regístrate aquí"
+                  : "Inicia sesión aquí"}
               </button>
             </p>
 
