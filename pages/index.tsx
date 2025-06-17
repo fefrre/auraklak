@@ -429,7 +429,7 @@ export default function HomePage() {
               className="px-8 py-4 bg-purple-700 text-white font-bold text-xl rounded-lg hover:bg-purple-800 transition-all duration-300 shadow-lg hover:shadow-purple-glow-md disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Subiendo..." : "Subir obra?"}
+              {isSubmitting ? "Subiendo..." : "Enviar a revision?"}
             </button>
 
             <Link href="/obras">
@@ -458,10 +458,10 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-purple-800 to-gray-900 border border-purple-600 rounded-lg shadow-2xl p-8 text-center max-w-md w-full animate-pop-in">
             <h3 className="text-4xl font-extrabold text-white mb-4 animate-bounce-text">
-              ¡Obra Enviada con Éxito! 🎉
+              ¡Obra Enviada a Revision con Éxito! 🎉
             </h3>
             <p className="text-xl text-purple-100 mb-6">
-              Tu obra ha sido compartida en AURA.
+              Tu obra ha sido llevada a revision a los administradores AURA.
             </p>
             <div className="flex flex-col gap-4">
               <button
