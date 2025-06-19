@@ -26,9 +26,11 @@ interface Tomo {
   contenido_html: string;
   autor?: string;
   imagen_url?: string;
-  link?: string; // Asegúrate de que tu columna 'link' en Supabase guarde la URL de Instagram
+  imagenes_urls?: string[]; // 👈 añadimos este campo nuevo
+  link?: string;
   fecha_publicacion: string;
 }
+
 
 export default function TomoPage() {
   const router = useRouter();
@@ -153,18 +155,24 @@ export default function TomoPage() {
           </p>
         )}
 
-        {tomo.imagen_url && (
-          <div className="relative w-full h-72 md:h-96 mb-8 overflow-hidden rounded-lg shadow-md">
-            <Image
-              src={tomo.imagen_url}
-              alt={tomo.titulo || "Imagen del Tomo"}
-              fill
-              style={{ objectFit: "cover" }}
-              sizes="100vw"
-              className="rounded-lg"
-            />
-          </div>
-        )}
+{(tomo.imagenes_urls || [tomo.imagen_url])
+  .filter((img): img is string => typeof img === "string")
+  .map((img, index) => (
+    <div
+      key={index}
+      className="relative w-full h-72 md:h-96 mb-8 overflow-hidden rounded-lg shadow-md"
+    >
+      <Image
+        src={img}
+        alt={`${tomo.titulo} - imagen ${index + 1}`}
+        fill
+        style={{ objectFit: "cover" }}
+        sizes="100vw"
+        className="rounded-lg"
+      />
+    </div>
+))}
+
 
         <div
           className="prose prose-lg max-w-none mx-auto leading-relaxed text-black"

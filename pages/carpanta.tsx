@@ -73,15 +73,15 @@ export default function CarpantaPage() {
       <Head>
         <title>Carpanta – Periódico de Arte Local</title>
       </Head>
-
       <Image
         src="/decorado-carapanta.png"
         alt="Decoración"
         width={300}
         height={300}
         className="absolute top-10 left-1/2 transform -translate-x-1/2 opacity-10 pointer-events-none z-0"
-      />
-
+      />{" "}
+      className="absolute top-10 left-1/2 transform -translate-x-1/2 opacity-10
+      pointer-events-none z-0"
       <nav
         className={`fixed top-0 w-full bg-[#eae4d6] border-b-2 border-[#3a3a3a] z-50 shadow-md transition-transform duration-500 ease-in-out ${
           showHeader ? "translate-y-0" : "-translate-y-full"
@@ -90,23 +90,24 @@ export default function CarpantaPage() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between h-24 px-4">
           <div className="flex items-center space-x-4">
+            {/* Logo sin fondo */}
             <Image
-              src="/logocarpanta.png"
+              src="/carpanta-pez.png"
               alt="Logo Carpanta"
-              width={64}
-              height={64}
-              className="rounded shadow-md"
+              width={0}
+              height={0}
+              sizes="(max-width: 768px) 64px, (max-width: 1200px) 80px, 96px"
+              className="w-16 sm:w-20 md:w-24 h-auto object-contain"
+              style={{ backgroundColor: "transparent" }}
             />
-            <span
-              className="text-4xl md:text-5xl font-black tracking-widest"
-              style={{
-                fontFamily: "UnifrakturCook, serif",
-                color: "#1a1a1a",
-                textShadow: "1px 1px 0px #ccc",
-              }}
-            >
-              CARPANTA
-            </span>
+            <Image
+              src="/carpanta-letras.png"
+              alt="Carpanta Título"
+              width={200}
+              height={64}
+              className="object-contain"
+              style={{ backgroundColor: "transparent" }}
+            />
           </div>
 
           <div className="hidden md:flex items-center space-x-6 text-lg">
@@ -146,7 +147,7 @@ export default function CarpantaPage() {
 
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#f4f1e8] px-6 py-4 space-y-3">
-            <Link href="/" className="block hover:underline">
+            <Link href="/carpanta " className="block hover:underline">
               Inicio
             </Link>
             <Link href="#noticias" className="block hover:underline">
@@ -167,7 +168,6 @@ export default function CarpantaPage() {
           </div>
         )}
       </nav>
-
       <section className="pt-40 pb-10 px-6 border-b-2 border-[#3a3a3a] text-center bg-[#f9f7f2]">
         <p className="text-sm uppercase tracking-widest text-gray-600 mb-2">
           {fecha}
@@ -177,10 +177,9 @@ export default function CarpantaPage() {
         </h2>
         <p className="text-lg mt-4 max-w-2xl mx-auto text-gray-700">
           Una exposición permanente del arte, cultura y expresión visual de
-          proyectos emergentes como **AURA** y **Blacksirena**.
+          proyectos emergentes como AURA .
         </p>
       </section>
-
       {/* Sección de "Noticias" (Tomos) */}
       <section
         id="noticias"
@@ -197,10 +196,10 @@ export default function CarpantaPage() {
               className="border-2 border-[#3a3a3a] bg-[#ffffffcc] p-6 rounded-md shadow-md flex flex-col"
             >
               {/* Imagen del tomo (si existe) */}
-              {tomo.imagen_url && (
+              {(tomo.imagenes_urls?.[0] || tomo.imagen_url) && (
                 <div className="mb-4 relative w-full h-48 sm:h-64 lg:h-72 overflow-hidden rounded-md">
                   <Image
-                    src={tomo.imagen_url}
+                    src={tomo.imagenes_urls?.[0] || tomo.imagen_url}
                     alt={tomo.titulo || "Imagen del Tomo"}
                     fill
                     style={{ objectFit: "cover" }}
@@ -240,7 +239,7 @@ export default function CarpantaPage() {
 
               {/* Contenido HTML del Tomo */}
               <div
-                className="prose prose-sm max-w-none text-black flex-grow overflow-hidden"
+                className="prose prose-sm max-w-none text-black flex-grow overflow-hidden line-clamp-4"
                 dangerouslySetInnerHTML={{ __html: tomo.contenido_html }}
               />
 
@@ -275,7 +274,6 @@ export default function CarpantaPage() {
           ))
         )}
       </section>
-
       <footer className="text-center py-6 text-sm text-gray-600 bg-[#eae4d6] border-t-2 border-[#3a3a3a]">
         © {new Date().getFullYear()} Carpanta. Publicación independiente de arte
         y cultura.

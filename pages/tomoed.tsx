@@ -8,11 +8,10 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 
-// Inicializa Supabase con variables de entorno
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function TomoEditor() {
   const router = useRouter();
@@ -22,7 +21,7 @@ export default function TomoEditor() {
   const [autor, setAutor] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [link, setLink] = useState("");
-  const [imagenFile, setImagenFile] = useState<File | null>(null);
+  const [imagenes, setImagenes] = useState<File[]>([]);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
 
   const editor = useEditor({
@@ -49,9 +48,18 @@ export default function TomoEditor() {
   };
 
   const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImagenFile(e.target.files[0]);
+    if (e.target.files) {
+      const selected = Array.from(e.target.files);
+      if (selected.length + imagenes.length > 10) {
+        setMensaje("❌ Solo puedes subir hasta 10 imágenes.");
+        return;
+      }
+      setImagenes((prev) => [...prev, ...selected]);
     }
+  };
+
+  const eliminarImagen = (index: number) => {
+    setImagenes((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,38 +69,36 @@ export default function TomoEditor() {
     setMensaje("");
     setSubiendoImagen(true);
 
-    let imagenUrl = "";
+    const imagenUrls: string[] = [];
 
-    if (imagenFile) {
-      const fileExt = imagenFile.name.split(".").pop();
-      const fileName = `${slug || "tomo"}-${Date.now()}.${fileExt}`;
+    for (const imagen of imagenes) {
+      const fileExt = imagen.name.split(".").pop();
+      const fileName = `${slug || "tomo"}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
       const filePath = `imagenestomos/${fileName}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("imagenestomos")
-        .upload(filePath, imagenFile);
+        .upload(filePath, imagen);
 
       if (uploadError) {
-        setMensaje(`❌ Error al subir la imagen: ${uploadError.message}`);
+        setMensaje(`❌ Error al subir imagen: ${uploadError.message}`);
         setSubiendoImagen(false);
         return;
       }
 
-      // MODIFICACIÓN CLAVE AQUÍ: getPublicUrl solo devuelve 'data', no 'error' directamente.
       const { data: publicUrlData } = supabase.storage
         .from("imagenestomos")
         .getPublicUrl(filePath);
 
-      // Verificamos si la URL pública está disponible
-      if (!publicUrlData || !publicUrlData.publicUrl) {
-        setMensaje(
-          `❌ Error al obtener la URL pública: La URL no está disponible.`
-        );
+      if (!publicUrlData?.publicUrl) {
+        setMensaje("❌ Error al obtener URL de imagen.");
         setSubiendoImagen(false);
         return;
       }
 
-      imagenUrl = publicUrlData.publicUrl;
+      imagenUrls.push(publicUrlData.publicUrl);
     }
 
     const res = await fetch("/api/tomos/create", {
@@ -103,19 +109,20 @@ export default function TomoEditor() {
         slug,
         contenido_html,
         autor,
-        imagen_url: imagenUrl,
+        imagen_url: imagenUrls[0] || null,
+          imagenes_urls: imagenUrls,  // usa la primera imagen como portada
         link: link.trim() || null,
       }),
     });
 
     const data = await res.json();
     if (res.ok) {
-      setMensaje("✅ Publicacion enviada a revision");
+      setMensaje("✅ Publicación enviada a revisión correctamente 🎉");
       setTitulo("");
       setSlug("");
       setAutor("");
       setLink("");
-      setImagenFile(null);
+      setImagenes([]);
       editor?.commands.setContent("");
     } else {
       setMensaje(`❌ Error: ${data.error}`);
@@ -132,17 +139,19 @@ export default function TomoEditor() {
 
       <div className="max-w-4xl mx-auto bg-white rounded shadow-md p-6 space-y-6 border border-[#ccc]">
         <h1 className="text-3xl font-bold mb-4 text-center">
-          Crear nueva publicacion
+          Crear nueva publicación
         </h1>
 
         {mensaje && (
-          <p
-            className={`text-center font-semibold text-sm ${
-              mensaje.startsWith("✅") ? "text-green-600" : "text-red-600"
+          <div
+            className={`text-center text-base font-semibold px-4 py-3 rounded-md transition-all duration-300 ${
+              mensaje.startsWith("✅")
+                ? "bg-green-100 text-green-800 border border-green-400 animate-pulse"
+                : "bg-red-100 text-red-800 border border-red-400"
             }`}
           >
             {mensaje}
-          </p>
+          </div>
         )}
 
         <form
@@ -193,24 +202,38 @@ export default function TomoEditor() {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Imagen (opcional)</label>
+            <label className="block mb-1 font-medium">
+              Imágenes (máx. 10)
+            </label>
             <label
               htmlFor="imagenFileInput"
               className="inline-block cursor-pointer bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
             >
-              {imagenFile ? "Cambiar imagen" : "Seleccionar imagen"}
+              {imagenes.length > 0 ? "Agregar más imágenes" : "Seleccionar imágenes"}
             </label>
             <input
               id="imagenFileInput"
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImagenChange}
               className="hidden"
             />
-            {imagenFile && (
-              <p className="mt-1 text-sm text-gray-600">
-                Archivo seleccionado: {imagenFile.name}
-              </p>
+            {imagenes.length > 0 && (
+              <ul className="mt-3 text-sm text-gray-700 list-disc pl-5 space-y-1">
+                {imagenes.map((img, i) => (
+                  <li key={i} className="flex items-center justify-between">
+                    {img.name}
+                    <button
+                      type="button"
+                      onClick={() => eliminarImagen(i)}
+                      className="text-red-600 hover:underline ml-4 text-xs"
+                    >
+                      Eliminar
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
@@ -220,7 +243,6 @@ export default function TomoEditor() {
               <EditorContent
                 editor={editor}
                 className="min-h-[200px] p-4 text-black leading-relaxed prose prose-sm"
-                style={{ backgroundColor: "white" }}
               />
             </div>
           </div>
@@ -234,19 +256,19 @@ export default function TomoEditor() {
                 : "bg-black hover:bg-gray-800"
             } transition`}
           >
-            {subiendoImagen ? "Subiendo imagen..." : "Solicitar publicacion"}
+            {subiendoImagen ? "Subiendo imágenes..." : "Solicitar publicación"}
           </button>
-          
         </form>
+
         <div className="flex justify-center mt-6">
-  <button
-    type="button"
-    onClick={() => router.push("/carpanta")}
-    className="inline-block cursor-pointer bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-  >
-    Ir al inicio
-  </button>
-</div>
+          <button
+            type="button"
+            onClick={() => router.push("/carpanta")}
+            className="inline-block cursor-pointer bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+          >
+            Ir al inicio
+          </button>
+        </div>
       </div>
 
       <style jsx>{`
