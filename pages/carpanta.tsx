@@ -74,7 +74,7 @@ export default function CarpantaPage() {
         <title>Carpanta – Periódico de Arte Local</title>
       </Head>
       <Image
-        src="/decorado-carapanta.png"
+        src="/carapanta-completo.png"
         alt="Decoración"
         width={300}
         height={300}
@@ -92,7 +92,7 @@ export default function CarpantaPage() {
           <div className="flex items-center space-x-4">
             {/* Logo sin fondo */}
             <Image
-              src="/carpanta-pez.png"
+              src="/carpanta-pez.svg"
               alt="Logo Carpanta"
               width={0}
               height={0}
@@ -101,7 +101,7 @@ export default function CarpantaPage() {
               style={{ backgroundColor: "transparent" }}
             />
             <Image
-              src="/carpanta-letras.png"
+              src="/carpanta-letras.svg"
               alt="Carpanta Título"
               width={200}
               height={64}
@@ -132,6 +132,12 @@ export default function CarpantaPage() {
                   className="block px-4 py-2 hover:bg-gray-100"
                 >
                   Blacksirena
+                </Link>
+                <Link
+                  href="/admincar/login"
+                  className="block px-4 py-2 hover:bg-gray-100"
+                >
+                  Administador?
                 </Link>
               </div>
             </div>
@@ -172,6 +178,7 @@ export default function CarpantaPage() {
         <p className="text-sm uppercase tracking-widest text-gray-600 mb-2">
           {fecha}
         </p>
+        
         <h2 className="text-4xl md:text-5xl font-bold leading-snug text-[#1a1a1a]">
           𝘙𝘦𝘷𝘪𝘴𝘵𝘢 𝘦𝘮𝘦𝘳𝘨𝘦𝘯𝘵𝘦 𝘲𝘶𝘦 𝘣𝘶𝘴𝘤𝘢 𝘭𝘢 𝘥𝘪𝘷𝘶𝘭𝘨𝘢𝘤𝘪ó𝘯 𝘥𝘦 𝘢𝘳𝘵𝘦 𝘭𝘰𝘤𝘢𝘭.
         </h2>

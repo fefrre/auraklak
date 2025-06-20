@@ -1,0 +1,53 @@
+/* Estilos básicos de Embla Carousel */
+.embla {
+  overflow: hidden;
+}
+.embla__viewport {
+  overflow: hidden;
+}
+.embla__container {
+  display: flex;
+  touch-action: pan-y; /* Permite desplazamiento vertical normal en la página */
+}
+.embla__slide {
+  flex: 0 0 100%; /* Cada slide ocupa el 100% del ancho */
+  min-width: 0; /* Necesario para que flexbox funcione correctamente */
+  position: relative; /* Asegura que el Image de Next.js se posicione correctamente */
+}
+
+/* Puedes agregar estilos para botones de navegación o paginación aquí si los necesitas */
+/* .embla__button { ... } */
+/* .embla__dot { ... } */
+.embla {
+  overflow: hidden;
+}
+
+.embla__viewport {
+  overflow: hidden;
+  width: 100%;
+}
+
+.embla__container {
+  display: flex;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  margin-left: -1rem;
+  margin-right: -1rem;
+}
+
+.embla__slide {
+  position: relative;
+  flex: 0 0 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.embla__slide img {
+  transition: transform 0.5s ease-in-out, filter 0.4s;
+}
+
+.embla__slide:hover img {
+  transform: scale(1.05);
+  filter: brightness(1.05) contrast(1.1);
+}
