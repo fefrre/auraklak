@@ -155,8 +155,8 @@ export default function CarpantaPage() {
             <Link href="/carpanta " className="block hover:underline">
               Inicio
             </Link>{" "}
-            <Link href="/login" className="block hover:underline">
-              AURA
+            <Link href="/admincar/login" className="block hover:underline">
+              Administrador?
             </Link>
             <Link href="#noticias" className="block hover:underline">
               Noticias
