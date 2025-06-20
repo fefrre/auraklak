@@ -159,9 +159,6 @@ export default function CarpantaPage() {
             <Link href="#noticias" className="block hover:underline">
               Noticias
             </Link>
-            <Link href="/tomos/galeria" className="block hover:underline">
-              Tomos
-            </Link>
             <Link href="/" className="block hover:underline">
               AURA
             </Link>
