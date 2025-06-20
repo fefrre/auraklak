@@ -78,17 +78,16 @@ export default function CarpantaPage() {
         alt="Decoración"
         width={300}
         height={300}
-        className="absolute top-10 left-1/2 transform -translate-x-1/2 opacity-10 pointer-events-none z-0"
+        className="absolute z-0 transform -translate-x-1/2 pointer-events-none top-10 left-1/2 opacity-10"
       />{" "}
-      className="absolute top-10 left-1/2 transform -translate-x-1/2 opacity-10
-      pointer-events-none z-0"
+      className="absolute z-0 transform -translate-x-1/2 pointer-events-none top-10 left-1/2 opacity-10"
       <nav
         className={`fixed top-0 w-full bg-[#eae4d6] border-b-2 border-[#3a3a3a] z-50 shadow-md transition-transform duration-500 ease-in-out ${
           showHeader ? "translate-y-0" : "-translate-y-full"
         }`}
         style={{ backdropFilter: "blur(4px)" }}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-24 px-4">
+        <div className="flex items-center justify-between h-24 px-4 mx-auto max-w-7xl">
           <div className="flex items-center space-x-4">
             {/* Logo sin fondo */}
             <Image
@@ -97,7 +96,7 @@ export default function CarpantaPage() {
               width={0}
               height={0}
               sizes="(max-width: 768px) 64px, (max-width: 1200px) 80px, 96px"
-              className="w-16 sm:w-20 md:w-24 h-auto object-contain"
+              className="object-contain w-16 h-auto sm:w-20 md:w-24"
               style={{ backgroundColor: "transparent" }}
             />
             <Image
@@ -110,7 +109,7 @@ export default function CarpantaPage() {
             />
           </div>
 
-          <div className="hidden md:flex items-center space-x-6 text-lg">
+          <div className="items-center hidden space-x-6 text-lg md:flex">
             <Link href="/carpanta" className="hover:underline">
               Inicio
             </Link>
@@ -123,7 +122,7 @@ export default function CarpantaPage() {
             </Link>
             <div className="relative group">
               <button className="hover:underline">Extensiones</button>
-              <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded shadow-lg w-40 opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+              <div className="absolute right-0 z-50 w-40 mt-2 transition duration-200 bg-white border border-gray-300 rounded shadow-lg opacity-0 group-hover:opacity-100">
                 <Link href="/" className="block px-4 py-2 hover:bg-gray-100">
                   AURA
                 </Link>
@@ -144,7 +143,7 @@ export default function CarpantaPage() {
           </div>
 
           <button
-            className="md:hidden text-2xl"
+            className="text-2xl md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             ☰
@@ -155,6 +154,9 @@ export default function CarpantaPage() {
           <div className="md:hidden bg-[#f4f1e8] px-6 py-4 space-y-3">
             <Link href="/carpanta " className="block hover:underline">
               Inicio
+            </Link>{" "}
+            <Link href="/login" className="block hover:underline">
+              AURA
             </Link>
             <Link href="#noticias" className="block hover:underline">
               Noticias
@@ -172,14 +174,14 @@ export default function CarpantaPage() {
         )}
       </nav>
       <section className="pt-40 pb-10 px-6 border-b-2 border-[#3a3a3a] text-center bg-[#f9f7f2]">
-        <p className="text-sm uppercase tracking-widest text-gray-600 mb-2">
+        <p className="mb-2 text-sm tracking-widest text-gray-600 uppercase">
           {fecha}
         </p>
-        
+
         <h2 className="text-4xl md:text-5xl font-bold leading-snug text-[#1a1a1a]">
           𝘙𝘦𝘷𝘪𝘴𝘵𝘢 𝘦𝘮𝘦𝘳𝘨𝘦𝘯𝘵𝘦 𝘲𝘶𝘦 𝘣𝘶𝘴𝘤𝘢 𝘭𝘢 𝘥𝘪𝘷𝘶𝘭𝘨𝘢𝘤𝘪ó𝘯 𝘥𝘦 𝘢𝘳𝘵𝘦 𝘭𝘰𝘤𝘢𝘭.
         </h2>
-        <p className="text-lg mt-4 max-w-2xl mx-auto text-gray-700">
+        <p className="max-w-2xl mx-auto mt-4 text-lg text-gray-700">
           Una exposición permanente del arte, cultura y expresión visual de
           proyectos emergentes como AURA .
         </p>
@@ -187,10 +189,10 @@ export default function CarpantaPage() {
       {/* Sección de "Noticias" (Tomos) */}
       <section
         id="noticias"
-        className="max-w-6xl mx-auto px-6 py-16 grid gap-14 md:grid-cols-2"
+        className="grid max-w-6xl px-6 py-16 mx-auto gap-14 md:grid-cols-2"
       >
         {tomos.length === 0 ? (
-          <p className="text-center text-gray-600 col-span-2">
+          <p className="col-span-2 text-center text-gray-600">
             No hay tomos publicados aún.
           </p>
         ) : (
@@ -201,7 +203,7 @@ export default function CarpantaPage() {
             >
               {/* Imagen del tomo (si existe) */}
               {(tomo.imagenes_urls?.[0] || tomo.imagen_url) && (
-                <div className="mb-4 relative w-full h-48 sm:h-64 lg:h-72 overflow-hidden rounded-md">
+                <div className="relative w-full h-48 mb-4 overflow-hidden rounded-md sm:h-64 lg:h-72">
                   <Image
                     src={tomo.imagenes_urls?.[0] || tomo.imagen_url}
                     alt={tomo.titulo || "Imagen del Tomo"}
@@ -216,20 +218,20 @@ export default function CarpantaPage() {
               {/* Título del Tomo (enlazado si hay un slug) */}
               {tomo.slug ? (
                 <Link href={`/tomos/${tomo.slug}`} className="hover:underline">
-                  <h3 className="text-2xl font-bold mb-2 cursor-pointer">
+                  <h3 className="mb-2 text-2xl font-bold cursor-pointer">
                     {tomo.titulo}
                   </h3>
                 </Link>
               ) : (
-                <h3 className="text-2xl font-bold mb-2">{tomo.titulo}</h3>
+                <h3 className="mb-2 text-2xl font-bold">{tomo.titulo}</h3>
               )}
 
               {/* Autor y Fecha de Publicación */}
               {tomo.autor && (
-                <p className="text-sm text-gray-500 mb-1">Por: {tomo.autor}</p>
+                <p className="mb-1 text-sm text-gray-500">Por: {tomo.autor}</p>
               )}
               {tomo.fecha_publicacion && (
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="mb-2 text-xs text-gray-500">
                   {new Date(tomo.fecha_publicacion).toLocaleDateString(
                     "es-ES",
                     {
@@ -243,16 +245,16 @@ export default function CarpantaPage() {
 
               {/* Contenido HTML del Tomo */}
               <div
-                className="prose prose-sm max-w-none text-black flex-grow overflow-hidden line-clamp-4"
+                className="flex-grow overflow-hidden prose-sm prose text-black max-w-none line-clamp-4"
                 dangerouslySetInnerHTML={{ __html: tomo.contenido_html }}
               />
 
-              <div className="mt-4 flex justify-between items-center">
+              <div className="flex items-center justify-between mt-4">
                 {/* Enlace de lectura completa si hay un slug */}
                 {tomo.slug && (
                   <Link
                     href={`/tomos/${tomo.slug}`}
-                    className="text-blue-600 hover:underline font-semibold"
+                    className="font-semibold text-blue-600 hover:underline"
                   >
                     Leer más →
                   </Link>
@@ -266,7 +268,7 @@ export default function CarpantaPage() {
                       href={tomo.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-black hover:text-gray-700 transition-colors" // Estilo en negro y hover suave
+                      className="text-black transition-colors hover:text-gray-700" // Estilo en negro y hover suave
                       aria-label="Visitar en Instagram" // Para accesibilidad
                     >
                       <FaInstagram className="text-2xl" />{" "}
@@ -284,7 +286,7 @@ export default function CarpantaPage() {
         <br />
         <Link
           href="/admincar/login"
-          className="underline text-gray-800 hover:text-black"
+          className="text-gray-800 underline hover:text-black"
         >
           Panel de Administración
         </Link>
