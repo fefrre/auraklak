@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 import { FaInstagram } from "react-icons/fa";
 
 import useEmblaCarousel from "embla-carousel-react";
-import "../../styles/embla.css";
+
 
 import { BsArrowLeftCircleFill, BsArrowRightCircleFill } from "react-icons/bs";
 

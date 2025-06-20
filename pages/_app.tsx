@@ -3,7 +3,6 @@ import "@/styles/globals.css"; // Asegúrate de tener esto
 import { Special_Elite } from "next/font/google";
 import '../styles/embla.css'
 
-
 // 🎯 Carga la fuente estilo máquina de escribir
 const specialElite = Special_Elite({
   subsets: ["latin"],
