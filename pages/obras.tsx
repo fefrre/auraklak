@@ -1,4 +1,5 @@
 "use client";
+
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -402,7 +403,7 @@ export default function ObrasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="flex flex-col min-h-screen text-gray-100 bg-gray-950">
       {/* Header Fijo/Dinámico */}
       <header
         className={`fixed top-0 left-0 w-full z-50 transition-transform duration-300 ${
@@ -425,14 +426,14 @@ export default function ObrasPage() {
                 fill
                 style={{ objectFit: "cover" }}
                 sizes="(max-width: 640px) 48px, (max-width: 768px) 64px, 80px"
-                className="rounded-xl shadow-lg transition-transform duration-500 ease-in-out hover:scale-110 hover:rotate-3"
+                className="transition-transform duration-500 ease-in-out shadow-lg rounded-xl hover:scale-110 hover:rotate-3"
               />
             </div>
-            <span className="hidden sm:inline text-xl sm:text-2xl lg:text-3xl font-bold text-white whitespace-nowrap">
+            <span className="hidden text-xl font-bold text-white sm:inline sm:text-2xl lg:text-3xl whitespace-nowrap">
               AURA
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-purple-400 text-center flex-grow mx-2">
+          <h1 className="flex-grow mx-2 text-2xl font-extrabold text-center text-purple-400 sm:text-3xl lg:text-4xl">
             OBRAS PUBLICADAS
           </h1>
 
@@ -440,7 +441,7 @@ export default function ObrasPage() {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
+              className="p-2 transition-all duration-200 bg-purple-700 rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
               aria-label="Toggle navigation menu"
             >
               {isMenuOpen ? (
@@ -451,23 +452,23 @@ export default function ObrasPage() {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 mt-3 w-72 md:w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-3 px-4 animate-fade-in-down z-50">
+              <div className="absolute right-0 z-50 px-4 py-3 mt-3 bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-72 md:w-80 animate-fade-in-down">
                 {user ? (
                   <>
-                    <p className="text-gray-300 text-sm mb-3 px-2">
+                    <p className="px-2 mb-3 text-sm text-gray-300">
                       Hola, {user.email}
                     </p>
                     <Link href="/index" className="block">
-                      <button className="flex items-center w-full px-4 py-3 text-left text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-colors duration-200 text-base font-semibold mb-2">
-                        <UserPlus className="mr-3 w-5 h-5" /> Subir Obra
+                      <button className="flex items-center w-full px-4 py-3 mb-2 text-base font-semibold text-left text-white transition-colors duration-200 bg-purple-600 rounded-md hover:bg-purple-700">
+                        <UserPlus className="w-5 h-5 mr-3" /> Subir Obra
                       </button>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-3 text-left text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200 text-base font-semibold"
+                      className="flex items-center w-full px-4 py-3 text-base font-semibold text-left text-white transition-colors duration-200 bg-red-600 rounded-md hover:bg-red-700"
                       disabled={authLoading}
                     >
-                      <LogOut className="mr-3 w-5 h-5" />{" "}
+                      <LogOut className="w-5 h-5 mr-3" />{" "}
                       {authLoading ? "Cerrando..." : "Cerrar Sesión"}
                     </button>
                   </>
@@ -481,9 +482,9 @@ export default function ObrasPage() {
                         );
                         setAuthMessage("");
                       }}
-                      className="flex items-center w-full px-4 py-3 text-left text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors duration-200 text-base font-semibold mb-2"
+                      className="flex items-center w-full px-4 py-3 mb-2 text-base font-semibold text-left text-white transition-colors duration-200 bg-green-600 rounded-md hover:bg-green-700"
                     >
-                      <LogIn className="mr-3 w-5 h-5" /> Iniciar Sesión
+                      <LogIn className="w-5 h-5 mr-3" /> Iniciar Sesión
                     </button>
                     <button
                       onClick={() => {
@@ -492,25 +493,25 @@ export default function ObrasPage() {
                         );
                         setAuthMessage("");
                       }}
-                      className="flex items-center w-full px-4 py-3 text-left text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 text-base font-semibold mb-3"
+                      className="flex items-center w-full px-4 py-3 mb-3 text-base font-semibold text-left text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700"
                     >
-                      <UserPlus className="mr-3 w-5 h-5" /> Registrarse
+                      <UserPlus className="w-5 h-5 mr-3" /> Registrarse
                     </button>
 
                     {/* Formularios pequeños (condicionales) */}
                     {showAuthForm === "login" && (
                       <form
                         onSubmit={handleInlineLogin}
-                        className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg"
+                        className="p-3 mt-4 space-y-3 bg-gray-700 rounded-lg"
                       >
-                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">
+                        <h3 className="mb-3 text-xl font-bold text-center text-purple-400">
                           Login
                         </h3>
                         <div>
                           <input
                             type="email"
                             placeholder="Email"
-                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                            className="w-full p-2 text-sm text-gray-100 placeholder-gray-500 bg-gray-900 border border-purple-600 rounded-md"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
                             required
@@ -521,14 +522,14 @@ export default function ObrasPage() {
                             <input
                               type={showLoginPassword ? "text" : "password"}
                               placeholder="Contraseña"
-                              className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                              className="w-full p-2 text-sm text-gray-100 placeholder-gray-500 bg-gray-900 border border-purple-600 rounded-md"
                               value={loginPassword}
                               onChange={(e) => setLoginPassword(e.target.value)}
                               required
                             />
                             <button
                               type="button"
-                              className="absolute right-2 top-2 text-purple-400"
+                              className="absolute text-purple-400 right-2 top-2"
                               onClick={() =>
                                 setShowLoginPassword(!showLoginPassword)
                               }
@@ -554,16 +555,16 @@ export default function ObrasPage() {
                     {showAuthForm === "register" && (
                       <form
                         onSubmit={handleInlineRegister}
-                        className="space-y-3 mt-4 p-3 bg-gray-700 rounded-lg"
+                        className="p-3 mt-4 space-y-3 bg-gray-700 rounded-lg"
                       >
-                        <h3 className="text-xl font-bold text-purple-400 text-center mb-3">
+                        <h3 className="mb-3 text-xl font-bold text-center text-purple-400">
                           Registro
                         </h3>
                         <div>
                           <input
                             type="email"
                             placeholder="Email"
-                            className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                            className="w-full p-2 text-sm text-gray-100 placeholder-gray-500 bg-gray-900 border border-purple-600 rounded-md"
                             value={registerEmail}
                             onChange={(e) => setRegisterEmail(e.target.value)}
                             required
@@ -574,7 +575,7 @@ export default function ObrasPage() {
                             <input
                               type={showRegisterPassword ? "text" : "password"}
                               placeholder="Contraseña"
-                              className="w-full p-2 border border-purple-600 rounded-md bg-gray-900 text-gray-100 placeholder-gray-500 text-sm"
+                              className="w-full p-2 text-sm text-gray-100 placeholder-gray-500 bg-gray-900 border border-purple-600 rounded-md"
                               value={registerPassword}
                               onChange={(e) =>
                                 setRegisterPassword(e.target.value)
@@ -583,7 +584,7 @@ export default function ObrasPage() {
                             />
                             <button
                               type="button"
-                              className="absolute right-2 top-2 text-purple-400"
+                              className="absolute text-purple-400 right-2 top-2"
                               onClick={() =>
                                 setShowRegisterPassword(!showRegisterPassword)
                               }
@@ -629,32 +630,32 @@ export default function ObrasPage() {
       {/* Contenido principal de la galería */}
       <main className="flex-grow pt-[88px] sm:pt-[96px] md:pt-[104px] p-6 max-w-5xl mx-auto w-full">
         {loading && (
-          <p className="text-center text-xl text-purple-300 mt-10">
+          <p className="mt-10 text-xl text-center text-purple-300">
             Cargando obras...
           </p>
         )}
         {error && (
-          <p className="text-center text-xl text-red-500 mt-10">
+          <p className="mt-10 text-xl text-center text-red-500">
             Error: {error}
           </p>
         )}
         {!loading && !error && obras.length === 0 && (
-          <p className="text-center text-xl text-purple-300 italic mt-10 animate-fade-in">
+          <p className="mt-10 text-xl italic text-center text-purple-300 animate-fade-in">
             Aún no hay obras publicadas. ¡Sé el primero en subir una!
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+        <div className="grid grid-cols-1 gap-8 mt-8 md:grid-cols-2 lg:grid-cols-3">
           {obras.map((obra) => {
             const fileType = getFileType(obra.url_archivo);
             return (
               <div
                 key={obra.id}
-                className="bg-gray-900 rounded-2xl shadow-xl border border-gray-700 overflow-hidden flex flex-col transform hover:scale-105 transition-transform duration-300 animate-fade-in"
+                className="flex flex-col overflow-hidden transition-transform duration-300 transform bg-gray-900 border border-gray-700 shadow-xl rounded-2xl hover:scale-105 animate-fade-in"
               >
                 {/* Contenido multimedia (imagen/video/documento) - Agregamos onClick */}
                 <div
-                  className="relative w-full h-60 bg-gray-800 flex items-center justify-center overflow-hidden cursor-pointer"
+                  className="relative flex items-center justify-center w-full overflow-hidden bg-gray-800 cursor-pointer h-60"
                   onClick={() => openModal(obra)}
                 >
                   {fileType === "image" && (
@@ -663,7 +664,7 @@ export default function ObrasPage() {
                       alt={obra.titulo}
                       fill
                       style={{ objectFit: "cover" }}
-                      className="w-full h-full object-cover"
+                      className="object-cover w-full h-full"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       priority={false}
                     />
@@ -671,7 +672,7 @@ export default function ObrasPage() {
                   {fileType === "video" && (
                     <video
                       controls
-                      className="w-full h-full object-cover"
+                      className="object-cover w-full h-full"
                       src={obra.url_archivo}
                       preload="metadata"
                     ></video>
@@ -679,7 +680,7 @@ export default function ObrasPage() {
                   {fileType === "pdf" && (
                     <div className="flex flex-col items-center justify-center text-purple-400">
                       <FileText className="w-24 h-24 mb-2" />
-                      <p className="text-lg font-semibold text-center px-4">
+                      <p className="px-4 text-lg font-semibold text-center">
                         Documento PDF
                       </p>
                     </div>
@@ -710,7 +711,7 @@ export default function ObrasPage() {
                       {fileType === "unknown" && (
                         <FileText className="w-24 h-24 mb-2" />
                       )}
-                      <p className="text-lg font-semibold text-center px-4">
+                      <p className="px-4 text-lg font-semibold text-center">
                         Haz clic para ver/descargar{" "}
                         {fileType === "unknown" ? "el archivo" : fileType}
                       </p>
@@ -719,18 +720,18 @@ export default function ObrasPage() {
                 </div>
 
                 {/* Detalles de la obra */}
-                <div className="p-6 flex flex-col flex-grow">
-                  <h2 className="text-2xl font-semibold text-purple-400 mb-2 truncate">
+                <div className="flex flex-col flex-grow p-6">
+                  <h2 className="mb-2 text-2xl font-semibold text-purple-400 truncate">
                     {obra.titulo}
                   </h2>
-                  <p className="text-gray-300 text-base mb-3 overflow-hidden text-ellipsis line-clamp-3">
+                  <p className="mb-3 overflow-hidden text-base text-gray-300 text-ellipsis line-clamp-3">
                     <strong className="text-purple-300">Autor:</strong>{" "}
                     {obra.autor}
                   </p>
-                  <p className="text-gray-300 text-base mb-3 overflow-hidden text-ellipsis line-clamp-3">
+                  <p className="mb-3 overflow-hidden text-base text-gray-300 text-ellipsis line-clamp-3">
                     {obra.descripcion}
                   </p>
-                  <p className="text-gray-400 text-sm italic mb-2 flex items-center gap-1">
+                  <p className="flex items-center gap-1 mb-2 text-sm italic text-gray-400">
                     <strong className="text-purple-300">Contacto:</strong>{" "}
                     {obra.contacto && obra.contacto !== "Anónimo" ? (
                       <>
@@ -741,7 +742,7 @@ export default function ObrasPage() {
                               href={obra.contacto}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="ml-1 text-purple-400 hover:text-purple-500 transition-colors"
+                              className="ml-1 text-purple-400 transition-colors hover:text-purple-500"
                               aria-label="Ir a Instagram del contacto"
                             >
                               <Instagram className="w-5 h-5" />{" "}
@@ -753,12 +754,12 @@ export default function ObrasPage() {
                       obra.contacto
                     )}
                   </p>
-                  <p className="text-gray-500 text-xs mt-auto">
+                  <p className="mt-auto text-xs text-gray-500">
                     Subido el: {new Date(obra.fecha).toLocaleDateString()}
                   </p>
 
                   {/* Sección de acciones (Likes e Instagram) */}
-                  <div className="flex items-center justify-between mt-4 border-t border-gray-700 pt-4">
+                  <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-700">
                     <button
                       onClick={() =>
                         handleLike(obra.id, obra.likes, obra.has_liked ?? false)
@@ -778,7 +779,7 @@ export default function ObrasPage() {
                           obra.has_liked ? "fill-current text-red-500" : ""
                         }`}
                       />
-                      <span className="font-bold text-lg">
+                      <span className="text-lg font-bold">
                         {obra.likes ?? 0}
                       </span>
                     </button>
@@ -790,7 +791,7 @@ export default function ObrasPage() {
                           href={obra.contacto}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-gray-600 hover:text-gray-400 transition-colors"
+                          className="text-gray-600 transition-colors hover:text-gray-400"
                           aria-label="Ir a Instagram"
                         >
                           <Instagram className="w-7 h-7" />{" "}
@@ -823,13 +824,13 @@ export default function ObrasPage() {
           >
             <button
               onClick={closeModal}
-              className="absolute top-3 right-3 p-2 rounded-full bg-purple-700 hover:bg-purple-800 text-white transition-colors duration-200 z-10"
+              className="absolute z-10 p-2 text-white transition-colors duration-200 bg-purple-700 rounded-full top-3 right-3 hover:bg-purple-800"
               aria-label="Cerrar modal"
             >
               <X className="w-6 h-6" />
             </button>
 
-            <h2 className="text-3xl font-bold text-purple-400 mb-4 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-center text-purple-400">
               {selectedObra.titulo}
             </h2>
 
@@ -849,7 +850,7 @@ export default function ObrasPage() {
               {getFileType(selectedObra.url_archivo) === "video" && (
                 <video
                   controls
-                  className="w-full h-full object-contain"
+                  className="object-contain w-full h-full"
                   src={selectedObra.url_archivo}
                   preload="metadata"
                 ></video>
@@ -860,7 +861,7 @@ export default function ObrasPage() {
                   className="w-full h-full"
                   title="PDF Viewer"
                 >
-                  <p className="text-gray-400 text-center">
+                  <p className="text-center text-gray-400">
                     Tu navegador no soporta la previsualización de PDFs.
                     <br />
                     Puedes{" "}
@@ -883,8 +884,8 @@ export default function ObrasPage() {
                 getFileType(selectedObra.url_archivo) === "archive" ||
                 getFileType(selectedObra.url_archivo) === "unknown") && (
                 <div className="flex flex-col items-center justify-center p-4 text-center">
-                  <FileText className="w-32 h-32 text-purple-400 mb-4" />
-                  <p className="text-xl text-gray-200 mb-4">
+                  <FileText className="w-32 h-32 mb-4 text-purple-400" />
+                  <p className="mb-4 text-xl text-gray-200">
                     Este tipo de archivo no puede ser previsualizado
                     directamente.
                   </p>
@@ -892,7 +893,7 @@ export default function ObrasPage() {
               )}
             </div>
 
-            <div className="text-gray-200 space-y-3">
+            <div className="space-y-3 text-gray-200">
               <p className="text-lg leading-relaxed">
                 <strong className="text-purple-300">Autor:</strong>{" "}
                 {selectedObra.autor}
@@ -900,7 +901,7 @@ export default function ObrasPage() {
               <p className="text-lg leading-relaxed">
                 {selectedObra.descripcion}
               </p>
-              <p className="text-purple-300 font-semibold flex items-center gap-1">
+              <p className="flex items-center gap-1 font-semibold text-purple-300">
                 Contacto:{" "}
                 {selectedObra.contacto &&
                 selectedObra.contacto !== "Anónimo" ? (
@@ -912,7 +913,7 @@ export default function ObrasPage() {
                           href={selectedObra.contacto}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-1 text-purple-400 hover:text-purple-500 transition-colors"
+                          className="ml-1 text-purple-400 transition-colors hover:text-purple-500"
                           aria-label="Ir a Instagram del contacto"
                         >
                           <Instagram className="w-5 h-5" />
@@ -923,14 +924,14 @@ export default function ObrasPage() {
                   <span className="text-gray-300">{selectedObra.contacto}</span>
                 )}
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-sm text-gray-400">
                 Publicado el:{" "}
                 {new Date(selectedObra.fecha).toLocaleDateString()}
               </p>
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center space-x-2">
                   <Heart className="w-6 h-6 text-red-500 fill-current" />
-                  <span className="font-bold text-xl">
+                  <span className="text-xl font-bold">
                     {selectedObra.likes ?? 0}
                   </span>
                   <span className="text-gray-400">me gusta</span>
@@ -943,7 +944,7 @@ export default function ObrasPage() {
                       selectedObra.titulo
                     )
                   }
-                  className="flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
+                  className="flex items-center px-5 py-2 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-lg hover:bg-blue-700"
                 >
                   <Download className="w-5 h-5 mr-2" /> Descargar
                 </button>
