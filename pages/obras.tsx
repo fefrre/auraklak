@@ -19,12 +19,11 @@ import {
   FileImage,
   FileArchive,
   Download,
-  Instagram, // Asegúrate de que Instagram esté importado
+  Instagram,
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 
-// Definición de tipo para una obra
 type Obra = {
   id: number;
   titulo: string;
@@ -37,7 +36,6 @@ type Obra = {
   has_liked?: boolean;
 };
 
-// Helper function to determine file type for display
 const getFileType = (url: string) => {
   const extension = url.split(".").pop()?.toLowerCase();
   if (!extension) return "unknown";
@@ -54,6 +52,18 @@ const getFileType = (url: string) => {
   return "unknown";
 };
 
+// Función para detectar handles de Instagram
+const isInstagramHandle = (text: string) => {
+  return text?.startsWith("@");
+};
+
+// Función para construir URL de Instagram desde handle
+const buildInstagramUrl = (handle: string) => {
+  if (!handle) return "";
+  const cleanHandle = handle.replace(/^@/, "").trim();
+  return `https://instagram.com/${cleanHandle}`;
+};
+
 export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,28 +72,20 @@ export default function ObrasPage() {
   const router = useRouter();
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-
-  // Estados para el header dinámico
   const [scrollUp, setScrollUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-
-  // Nuevo estado para controlar la visibilidad del menú desplegable
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // Referencia para detectar clics fuera del menú
   const menuRef = useRef<HTMLDivElement>(null);
-
-  // Estados para los campos pequeños de login/registro
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
-  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(
-    null
-  );
+  const [showAuthForm, setShowAuthForm] = useState<"login" | "register" | null>(null);
   const [animatingLogo, setAnimatingLogo] = useState(false);
+  const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
+  const [isClosingModal, setIsClosingModal] = useState(false);
 
   const handleLogoClick = () => {
     if (animatingLogo) return;
@@ -92,12 +94,7 @@ export default function ObrasPage() {
       router.push("/");
     }, 600);
   };
-  // --- Nuevos estados para el modal de imagen ---
-  const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
-  const [isClosingModal, setIsClosingModal] = useState(false);
-  // --- Fin nuevos estados ---
 
-  // Efecto para cerrar el menú si se hace clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -111,7 +108,6 @@ export default function ObrasPage() {
     };
   }, [menuRef]);
 
-  // Función para obtener el nombre del archivo de la URL
   const getFileNameFromUrl = (url: string) => {
     try {
       const urlObj = new URL(url);
@@ -126,7 +122,6 @@ export default function ObrasPage() {
     }
   };
 
-  // Efecto para obtener el usuario autenticado y suscribirse a cambios
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -137,7 +132,6 @@ export default function ObrasPage() {
 
     fetchUser();
 
-    // Suscribirse a cambios de autenticación
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -155,24 +149,19 @@ export default function ObrasPage() {
     };
   }, []);
 
-  // Función para cargar las obras y los likes del usuario
   const cargarObras = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     const { data: obrasData, error: obrasError } = await supabase
       .from("obras")
-      .select(
-        "id, titulo, autor, descripcion, url_archivo, contacto, fecha, likes"
-      )
+      .select("id, titulo, autor, descripcion, url_archivo, contacto, fecha, likes")
       .eq("aprobada", true)
       .order("id", { ascending: false });
 
     if (obrasError) {
       console.error("Error al cargar obras:", obrasError);
-      setError(
-        "No se pudieron cargar las obras. Inténtalo de nuevo más tarde."
-      );
+      setError("No se pudieron cargar las obras. Inténtalo de nuevo más tarde.");
       setLoading(false);
       return;
     }
@@ -188,9 +177,7 @@ export default function ObrasPage() {
       if (userLikesError) {
         console.error("Error al cargar likes del usuario:", userLikesError);
       } else {
-        const likedObraIds = new Set(
-          userLikesData?.map((like) => like.obra_id)
-        );
+        const likedObraIds = new Set(userLikesData?.map((like) => like.obra_id));
         loadedObras = loadedObras.map((obra) => ({
           ...obra,
           has_liked: likedObraIds.has(obra.id),
@@ -202,7 +189,6 @@ export default function ObrasPage() {
     setLoading(false);
   }, [user]);
 
-  // Función para manejar el "Me gusta"
   const handleLike = useCallback(
     async (obraId: number, currentLikes: number, hasLiked: boolean) => {
       if (!user) {
@@ -267,7 +253,6 @@ export default function ObrasPage() {
     [user, router]
   );
 
-  // Función para manejar el cierre de sesión
   const handleLogout = async () => {
     setAuthLoading(true);
     const { error } = await supabase.auth.signOut();
@@ -284,7 +269,6 @@ export default function ObrasPage() {
     setAuthLoading(false);
   };
 
-  // Función para manejar el inicio de sesión desde el pequeño formulario
   const handleInlineLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -306,7 +290,6 @@ export default function ObrasPage() {
     setAuthLoading(false);
   };
 
-  // Función para manejar el registro desde el pequeño formulario
   const handleInlineRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -320,9 +303,7 @@ export default function ObrasPage() {
     if (error) {
       setAuthMessage(`Error al registrarse: ${error.message}`);
     } else {
-      setAuthMessage(
-        "¡Registro exitoso! Revisa tu email para confirmar y luego inicia sesión."
-      );
+      setAuthMessage("¡Registro exitoso! Revisa tu email para confirmar y luego inicia sesión.");
       setRegisterEmail("");
       setRegisterPassword("");
       setShowAuthForm("login");
@@ -330,12 +311,10 @@ export default function ObrasPage() {
     setAuthLoading(false);
   };
 
-  // Efecto para cargar las obras al montar el componente o cuando el usuario cambie
   useEffect(() => {
     cargarObras();
   }, [cargarObras]);
 
-  // Efecto para el header dinámico (scroll)
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -365,9 +344,7 @@ export default function ObrasPage() {
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(
-          `Error al descargar el archivo: ${response.statusText}`
-        );
+        throw new Error(`Error al descargar el archivo: ${response.statusText}`);
       }
 
       const blob = await response.blob();
@@ -397,14 +374,8 @@ export default function ObrasPage() {
     }
   };
 
-  // Nueva función para verificar si es una URL de Instagram
-  const isInstagramUrl = (url: string) => {
-    return url.includes("instagram.com");
-  };
-
   return (
     <div className="flex flex-col min-h-screen text-gray-100 bg-gray-950">
-      {/* Header Fijo/Dinámico */}
       <header
         className={`fixed top-0 left-0 w-full z-50 transition-transform duration-300 ${
           scrollUp ? "translate-y-0" : "-translate-y-full"
@@ -437,7 +408,6 @@ export default function ObrasPage() {
             OBRAS PUBLICADAS
           </h1>
 
-          {/* Icono del menú y menú desplegable */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -474,12 +444,9 @@ export default function ObrasPage() {
                   </>
                 ) : (
                   <>
-                    {/* Botones para mostrar los formularios de login/registro */}
                     <button
                       onClick={() => {
-                        setShowAuthForm(
-                          showAuthForm === "login" ? null : "login"
-                        );
+                        setShowAuthForm(showAuthForm === "login" ? null : "login");
                         setAuthMessage("");
                       }}
                       className="flex items-center w-full px-4 py-3 mb-2 text-base font-semibold text-left text-white transition-colors duration-200 bg-green-600 rounded-md hover:bg-green-700"
@@ -488,9 +455,7 @@ export default function ObrasPage() {
                     </button>
                     <button
                       onClick={() => {
-                        setShowAuthForm(
-                          showAuthForm === "register" ? null : "register"
-                        );
+                        setShowAuthForm(showAuthForm === "register" ? null : "register");
                         setAuthMessage("");
                       }}
                       className="flex items-center w-full px-4 py-3 mb-3 text-base font-semibold text-left text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700"
@@ -498,7 +463,6 @@ export default function ObrasPage() {
                       <UserPlus className="w-5 h-5 mr-3" /> Registrarse
                     </button>
 
-                    {/* Formularios pequeños (condicionales) */}
                     {showAuthForm === "login" && (
                       <form
                         onSubmit={handleInlineLogin}
@@ -530,9 +494,7 @@ export default function ObrasPage() {
                             <button
                               type="button"
                               className="absolute text-purple-400 right-2 top-2"
-                              onClick={() =>
-                                setShowLoginPassword(!showLoginPassword)
-                              }
+                              onClick={() => setShowLoginPassword(!showLoginPassword)}
                             >
                               {showLoginPassword ? (
                                 <EyeOff size={18} />
@@ -577,17 +539,13 @@ export default function ObrasPage() {
                               placeholder="Contraseña"
                               className="w-full p-2 text-sm text-gray-100 placeholder-gray-500 bg-gray-900 border border-purple-600 rounded-md"
                               value={registerPassword}
-                              onChange={(e) =>
-                                setRegisterPassword(e.target.value)
-                              }
+                              onChange={(e) => setRegisterPassword(e.target.value)}
                               required
                             />
                             <button
                               type="button"
                               className="absolute text-purple-400 right-2 top-2"
-                              onClick={() =>
-                                setShowRegisterPassword(!showRegisterPassword)
-                              }
+                              onClick={() => setShowRegisterPassword(!showRegisterPassword)}
                             >
                               {showRegisterPassword ? (
                                 <EyeOff size={18} />
@@ -610,8 +568,7 @@ export default function ObrasPage() {
                     {authMessage && (
                       <p
                         className={`mt-4 text-center text-sm ${
-                          authMessage.includes("éxito") ||
-                          authMessage.includes("Revisa tu email")
+                          authMessage.includes("éxito") || authMessage.includes("Revisa tu email")
                             ? "text-green-400"
                             : "text-red-400"
                         }`}
@@ -627,7 +584,6 @@ export default function ObrasPage() {
         </div>
       </header>
 
-      {/* Contenido principal de la galería */}
       <main className="flex-grow pt-[88px] sm:pt-[96px] md:pt-[104px] p-6 max-w-5xl mx-auto w-full">
         {loading && (
           <p className="mt-10 text-xl text-center text-purple-300">
@@ -653,7 +609,6 @@ export default function ObrasPage() {
                 key={obra.id}
                 className="flex flex-col overflow-hidden transition-transform duration-300 transform bg-gray-900 border border-gray-700 shadow-xl rounded-2xl hover:scale-105 animate-fade-in"
               >
-                {/* Contenido multimedia (imagen/video/documento) - Agregamos onClick */}
                 <div
                   className="relative flex items-center justify-center w-full overflow-hidden bg-gray-800 cursor-pointer h-60"
                   onClick={() => openModal(obra)}
@@ -692,25 +647,12 @@ export default function ObrasPage() {
                     fileType === "archive" ||
                     fileType === "unknown") && (
                     <div className="flex flex-col items-center justify-center text-purple-400">
-                      {fileType === "word" && (
-                        <FileText className="w-24 h-24 mb-2" />
-                      )}
-                      {fileType === "powerpoint" && (
-                        <FileVideo className="w-24 h-24 mb-2" />
-                      )}{" "}
-                      {/* Using video icon for presentation */}
-                      {fileType === "excel" && (
-                        <FileText className="w-24 h-24 mb-2" />
-                      )}
-                      {fileType === "text" && (
-                        <FileText className="w-24 h-24 mb-2" />
-                      )}
-                      {fileType === "archive" && (
-                        <FileArchive className="w-24 h-24 mb-2" />
-                      )}
-                      {fileType === "unknown" && (
-                        <FileText className="w-24 h-24 mb-2" />
-                      )}
+                      {fileType === "word" && <FileText className="w-24 h-24 mb-2" />}
+                      {fileType === "powerpoint" && <FileVideo className="w-24 h-24 mb-2" />}
+                      {fileType === "excel" && <FileText className="w-24 h-24 mb-2" />}
+                      {fileType === "text" && <FileText className="w-24 h-24 mb-2" />}
+                      {fileType === "archive" && <FileArchive className="w-24 h-24 mb-2" />}
+                      {fileType === "unknown" && <FileText className="w-24 h-24 mb-2" />}
                       <p className="px-4 text-lg font-semibold text-center">
                         Haz clic para ver/descargar{" "}
                         {fileType === "unknown" ? "el archivo" : fileType}
@@ -719,14 +661,12 @@ export default function ObrasPage() {
                   )}
                 </div>
 
-                {/* Detalles de la obra */}
                 <div className="flex flex-col flex-grow p-6">
                   <h2 className="mb-2 text-2xl font-semibold text-purple-400 truncate">
                     {obra.titulo}
                   </h2>
                   <p className="mb-3 overflow-hidden text-base text-gray-300 text-ellipsis line-clamp-3">
-                    <strong className="text-purple-300">Autor:</strong>{" "}
-                    {obra.autor}
+                    <strong className="text-purple-300">Autor:</strong> {obra.autor}
                   </p>
                   <p className="mb-3 overflow-hidden text-base text-gray-300 text-ellipsis line-clamp-3">
                     {obra.descripcion}
@@ -736,19 +676,17 @@ export default function ObrasPage() {
                     {obra.contacto && obra.contacto !== "Anónimo" ? (
                       <>
                         <span>{obra.contacto}</span>
-                        {isValidUrl(obra.contacto) &&
-                          isInstagramUrl(obra.contacto) && (
-                            <a
-                              href={obra.contacto}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-1 text-purple-400 transition-colors hover:text-purple-500"
-                              aria-label="Ir a Instagram del contacto"
-                            >
-                              <Instagram className="w-5 h-5" />{" "}
-                              {/* Icono pequeño en el contacto */}
-                            </a>
-                          )}
+                        {isInstagramHandle(obra.contacto) && (
+                          <a
+                            href={buildInstagramUrl(obra.contacto)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-1 text-purple-400 transition-colors hover:text-purple-500"
+                            aria-label="Ir a Instagram del contacto"
+                          >
+                            <Instagram className="w-5 h-5" />
+                          </a>
+                        )}
                       </>
                     ) : (
                       obra.contacto
@@ -758,12 +696,9 @@ export default function ObrasPage() {
                     Subido el: {new Date(obra.fecha).toLocaleDateString()}
                   </p>
 
-                  {/* Sección de acciones (Likes e Instagram) */}
                   <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-700">
                     <button
-                      onClick={() =>
-                        handleLike(obra.id, obra.likes, obra.has_liked ?? false)
-                      }
+                      onClick={() => handleLike(obra.id, obra.likes, obra.has_liked ?? false)}
                       className={`flex items-center space-x-2 transition-colors duration-200 ${
                         user
                           ? obra.has_liked
@@ -779,25 +714,19 @@ export default function ObrasPage() {
                           obra.has_liked ? "fill-current text-red-500" : ""
                         }`}
                       />
-                      <span className="text-lg font-bold">
-                        {obra.likes ?? 0}
-                      </span>
+                      <span className="text-lg font-bold">{obra.likes ?? 0}</span>
                     </button>
-                    {obra.contacto &&
-                      obra.contacto !== "Anónimo" &&
-                      isValidUrl(obra.contacto) &&
-                      isInstagramUrl(obra.contacto) && (
-                        <a
-                          href={obra.contacto}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-600 transition-colors hover:text-gray-400"
-                          aria-label="Ir a Instagram"
-                        >
-                          <Instagram className="w-7 h-7" />{" "}
-                          {/* Icono más grande en la sección de likes */}
-                        </a>
-                      )}
+                    {obra.contacto && obra.contacto !== "Anónimo" && isInstagramHandle(obra.contacto) && (
+                      <a
+                        href={buildInstagramUrl(obra.contacto)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 transition-colors hover:text-gray-400"
+                        aria-label="Ir a Instagram"
+                      >
+                        <Instagram className="w-7 h-7" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
@@ -806,7 +735,6 @@ export default function ObrasPage() {
         </div>
       </main>
 
-      {/* --- Modal para ver contenido ampliado --- */}
       {selectedObra && (
         <div
           className={`fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
@@ -834,7 +762,6 @@ export default function ObrasPage() {
               {selectedObra.titulo}
             </h2>
 
-            {/* Contenido dinámico del modal */}
             <div className="relative w-full min-h-[24rem] bg-gray-800 flex items-center justify-center rounded-lg overflow-hidden mb-6">
               {getFileType(selectedObra.url_archivo) === "image" && (
                 <Image
@@ -895,38 +822,34 @@ export default function ObrasPage() {
 
             <div className="space-y-3 text-gray-200">
               <p className="text-lg leading-relaxed">
-                <strong className="text-purple-300">Autor:</strong>{" "}
-                {selectedObra.autor}
+                <strong className="text-purple-300">Autor:</strong> {selectedObra.autor}
               </p>
               <p className="text-lg leading-relaxed">
                 {selectedObra.descripcion}
               </p>
               <p className="flex items-center gap-1 font-semibold text-purple-300">
                 Contacto:{" "}
-                {selectedObra.contacto &&
-                selectedObra.contacto !== "Anónimo" ? (
+                {selectedObra.contacto && selectedObra.contacto !== "Anónimo" ? (
                   <>
                     <span>{selectedObra.contacto}</span>
-                    {isValidUrl(selectedObra.contacto) &&
-                      isInstagramUrl(selectedObra.contacto) && (
-                        <a
-                          href={selectedObra.contacto}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-1 text-purple-400 transition-colors hover:text-purple-500"
-                          aria-label="Ir a Instagram del contacto"
-                        >
-                          <Instagram className="w-5 h-5" />
-                        </a>
-                      )}
+                    {isInstagramHandle(selectedObra.contacto) && (
+                      <a
+                        href={buildInstagramUrl(selectedObra.contacto)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1 text-purple-400 transition-colors hover:text-purple-500"
+                        aria-label="Ir a Instagram del contacto"
+                      >
+                        <Instagram className="w-5 h-5" />
+                      </a>
+                    )}
                   </>
                 ) : (
                   <span className="text-gray-300">{selectedObra.contacto}</span>
                 )}
               </p>
               <p className="text-sm text-gray-400">
-                Publicado el:{" "}
-                {new Date(selectedObra.fecha).toLocaleDateString()}
+                Publicado el: {new Date(selectedObra.fecha).toLocaleDateString()}
               </p>
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center space-x-2">
@@ -936,14 +859,8 @@ export default function ObrasPage() {
                   </span>
                   <span className="text-gray-400">me gusta</span>
                 </div>
-                {/* Botón de Descargar siempre presente en el modal */}
                 <button
-                  onClick={() =>
-                    handleDownload(
-                      selectedObra.url_archivo,
-                      selectedObra.titulo
-                    )
-                  }
+                  onClick={() => handleDownload(selectedObra.url_archivo, selectedObra.titulo)}
                   className="flex items-center px-5 py-2 font-semibold text-white transition-colors duration-200 bg-blue-600 rounded-lg hover:bg-blue-700"
                 >
                   <Download className="w-5 h-5 mr-2" /> Descargar
@@ -953,7 +870,6 @@ export default function ObrasPage() {
           </div>
         </div>
       )}
-      {/* --- Fin Modal --- */}
     </div>
   );
 }

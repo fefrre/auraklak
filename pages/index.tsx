@@ -422,7 +422,7 @@ export default function HomePage() {
               placeholder={
                 isAnonymous
                   ? "Contacto no visible"
-                  : "Tu correo, redes sociales, etc."
+                  : "Usa tu '@'de Instagram."
               }
             />
           </div>
