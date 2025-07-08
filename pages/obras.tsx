@@ -290,26 +290,47 @@ export default function ObrasPage() {
     setAuthLoading(false);
   };
 
-  const handleInlineRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthLoading(true);
-    setAuthMessage("");
+const handleInlineRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setAuthLoading(true);
+  setAuthMessage("");
 
-    const { error } = await supabase.auth.signUp({
+  try {
+    // Verificación usando listUsers (API de administración)
+    const { data: { users }, error: listError } = await supabase
+      .auth
+      .admin
+      .listUsers();
+
+    const userExists = users?.some(user => user.email === registerEmail);
+
+    if (userExists) {
+      setAuthMessage("Este correo ya está registrado. Por favor inicia sesión.");
+      setAuthLoading(false);
+      return;
+    }
+
+    // Resto del código de registro...
+    const { error: signUpError } = await supabase.auth.signUp({
       email: registerEmail,
       password: registerPassword,
     });
 
-    if (error) {
-      setAuthMessage(`Error al registrarse: ${error.message}`);
+    if (signUpError) {
+      setAuthMessage(`Error al registrarse: ${signUpError.message}`);
     } else {
-      setAuthMessage("¡Registro exitoso! Revisa tu email para confirmar y luego inicia sesión.");
+      setAuthMessage("¡Registro exitoso! Revisa tu email para confirmar.");
       setRegisterEmail("");
       setRegisterPassword("");
       setShowAuthForm("login");
     }
+  } catch (error) {
+    console.error("Error en el registro:", error);
+    setAuthMessage("Ocurrió un error. Inténtalo de nuevo.");
+  } finally {
     setAuthLoading(false);
-  };
+  }
+};
 
   useEffect(() => {
     cargarObras();
