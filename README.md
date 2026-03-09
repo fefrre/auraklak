@@ -1,40 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Auraklak - Plataforma Full-Stack para Artistas
 
-## Getting Started
+Red social técnica para la gestión y exposición de obras de arte, con un sistema de administración centralizado y moderación de contenido.
 
-First, run the development server:
+## Stack Tecnológico
+* **Frontend:** Next.js (React) con animaciones avanzadas.
+* **Backend & DB:** Supabase (PostgreSQL).
+* **Autenticación:** Supabase Auth (Manejo de sesiones y roles).
+* **Almacenamiento:** Supabase Storage para gestión de medios.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+##  Arquitectura de Seguridad y Roles
+Este proyecto fue diseñado con una mentalidad de **Seguridad por Diseño**:
+* **RBAC (Role-Based Access Control):** Diferenciación estricta entre perfiles de Artista, Espectador y Administrador.
+* **Panel Administrativo:** Interfaz privada para la aprobación, rechazo y edición de contenido exclusivo.
+* **Integración con Supabase:** Gestión de políticas de seguridad para proteger la integridad de la base de datos.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+##  Módulos Principales
+* **Feed Interactivo:** Sistema de reacciones y visualización de obras en tiempo real.
+* **Panel de Control:** Herramientas CRUD completas para la gestión de la comunidad.
+* **Carpanta (Sub-rama):** Versión experimental con enfoque en UX tipo revista digital.
